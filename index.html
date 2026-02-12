@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hill Climber</title>
+<title>Hill Climb Racing</title>
 <style>
 * {
   margin: 0;
@@ -13,6 +13,7 @@
 body {
   overflow: hidden;
   font-family: 'Arial', sans-serif;
+  background: #000;
 }
 canvas {
   display: block;
@@ -30,30 +31,81 @@ canvas {
   top: 20px;
   left: 20px;
   color: white;
-  font-size: 24px;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  font-size: 28px;
+  text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
   font-weight: bold;
+}
+#fuelBar {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 30px;
+  background: rgba(0,0,0,0.7);
+  border: 3px solid white;
+  border-radius: 15px;
+  overflow: hidden;
+}
+#fuelFill {
+  height: 100%;
+  background: linear-gradient(to right, #ff4444, #ffaa00, #44ff44);
+  width: 100%;
+  transition: width 0.3s;
 }
 #restartBtn {
   position: absolute;
   top: 20px;
   right: 20px;
-  padding: 12px 24px;
-  font-size: 18px;
-  background: #4CAF50;
+  padding: 15px 30px;
+  font-size: 20px;
+  background: linear-gradient(to bottom, #4CAF50, #388E3C);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   pointer-events: auto;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 10px rgba(0,0,0,0.5);
   font-weight: bold;
 }
 #restartBtn:hover {
-  background: #45a049;
+  background: linear-gradient(to bottom, #45a049, #2E7D32);
 }
 #restartBtn:active {
-  transform: translateY(2px);
+  transform: translateY(3px);
+  box-shadow: 0 3px 5px rgba(0,0,0,0.5);
+}
+#gameOver {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.9);
+  padding: 40px;
+  border-radius: 20px;
+  color: white;
+  text-align: center;
+  display: none;
+  pointer-events: auto;
+}
+#gameOver h1 {
+  font-size: 48px;
+  margin-bottom: 20px;
+  color: #ff4444;
+}
+#gameOver p {
+  font-size: 24px;
+  margin: 10px 0;
+}
+#gameOver button {
+  margin-top: 20px;
+  padding: 15px 40px;
+  font-size: 22px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
 }
 </style>
 </head>
@@ -63,15 +115,31 @@ canvas {
   <div id="hud">
     <div>Distance: <span id="distance">0</span>m</div>
     <div>Best: <span id="best">0</span>m</div>
+    <div>Coins: <span id="coins">0</span></div>
+  </div>
+  <div id="fuelBar">
+    <div id="fuelFill"></div>
   </div>
   <button id="restartBtn">Restart</button>
+  <div id="gameOver">
+    <h1>Out of Fuel!</h1>
+    <p>Distance: <span id="finalDistance">0</span>m</p>
+    <p>Coins: <span id="finalCoins">0</span></p>
+    <button id="playAgainBtn">Play Again</button>
+  </div>
 </div>
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const distanceEl = document.getElementById('distance');
 const bestEl = document.getElementById('best');
+const coinsEl = document.getElementById('coins');
+const fuelFill = document.getElementById('fuelFill');
 const restartBtn = document.getElementById('restartBtn');
+const gameOverEl = document.getElementById('gameOver');
+const finalDistanceEl = document.getElementById('finalDistance');
+const finalCoinsEl = document.getElementById('finalCoins');
+const playAgainBtn = document.getElementById('playAgainBtn');
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -81,31 +149,46 @@ window.addEventListener('resize', () => {
   canvas.height = window.innerHeight;
 });
 
-const GRAVITY = 0.6;
-const WHEEL_RADIUS = 20;
-const CAR_WIDTH = 80;
-const CAR_HEIGHT = 40;
-const ACCELERATION = 0.4;
-const BRAKE_FORCE = 0.3;
-const MAX_SPEED = 12;
-const JUMP_FORCE = 15;
-const TERRAIN_SEGMENT = 30;
+const GRAVITY = 0.8;
+const WHEEL_RADIUS = 24;
+const CAR_WIDTH = 100;
+const CAR_HEIGHT = 50;
+const ACCELERATION = 0.5;
+const BRAKE_FORCE = 0.4;
+const MAX_SPEED = 14;
+const JUMP_FORCE = 18;
+const TERRAIN_SEGMENT = 40;
+const SUSPENSION_STRENGTH = 0.4;
+const SUSPENSION_DAMPING = 0.8;
+const MAX_FUEL = 100;
+const FUEL_CONSUMPTION = 0.015;
+const COIN_COLLECTION_RADIUS = 40;
 
 let car = {
-  x: 200,
+  x: 300,
   y: 200,
   vx: 0,
   vy: 0,
   angle: 0,
+  angularVel: 0,
   wheelAngle: 0,
-  onGround: false
+  onGround: false,
+  leftSuspension: 0,
+  rightSuspension: 0,
+  fuel: MAX_FUEL
 };
 
 let camera = { x: 0, y: 0 };
 let terrain = [];
+let coins = [];
+let particles = [];
+let clouds = [];
 let distance = 0;
-let bestDistance = parseInt(localStorage.getItem('hillClimberBest') || '0');
+let coinsCollected = 0;
+let bestDistance = parseInt(localStorage.getItem('hillClimbBest') || '0');
 let keys = {};
+let gameRunning = true;
+let terrainOffset = 0;
 
 bestEl.textContent = bestDistance;
 
@@ -121,23 +204,42 @@ class Random {
 
 function generateTerrain() {
   terrain = [];
-  const rng = new Random(54321);
-  let y = canvas.height * 0.6;
+  coins = [];
+  const rng = new Random(12345);
+  let baseY = canvas.height * 0.65;
   
-  for (let i = 0; i < 800; i++) {
+  for (let i = 0; i < 1000; i++) {
     const x = i * TERRAIN_SEGMENT;
-    const wave1 = Math.sin(i * 0.03) * 80;
-    const wave2 = Math.cos(i * 0.08) * 50;
-    const noise = (rng.next() - 0.5) * 30;
-    y = canvas.height * 0.6 + wave1 + wave2 + noise;
+    const wave1 = Math.sin(i * 0.02) * 100;
+    const wave2 = Math.sin(i * 0.05) * 60;
+    const wave3 = Math.cos(i * 0.08) * 40;
+    const noise = (rng.next() - 0.5) * 25;
+    const y = baseY + wave1 + wave2 + wave3 + noise;
     terrain.push({ x, y });
+    
+    if (i > 5 && i % 12 === 0 && rng.next() > 0.4) {
+      coins.push({ x: x, y: y - 80, collected: false });
+    }
+  }
+}
+
+function generateClouds() {
+  clouds = [];
+  const rng = new Random(54321);
+  for (let i = 0; i < 15; i++) {
+    clouds.push({
+      x: rng.next() * canvas.width * 3,
+      y: rng.next() * canvas.height * 0.4,
+      size: 40 + rng.next() * 60,
+      speed: 0.1 + rng.next() * 0.2
+    });
   }
 }
 
 function getTerrainY(x) {
   const index = Math.floor(x / TERRAIN_SEGMENT);
-  if (index < 0) return terrain[0].y;
-  if (index >= terrain.length - 1) return terrain[terrain.length - 1].y;
+  if (index < 0) return terrain[0]?.y || canvas.height * 0.65;
+  if (index >= terrain.length - 1) return terrain[terrain.length - 1]?.y || canvas.height * 0.65;
   
   const p1 = terrain[index];
   const p2 = terrain[index + 1];
@@ -154,153 +256,325 @@ function getTerrainAngle(x) {
   return Math.atan2(p2.y - p1.y, p2.x - p1.x);
 }
 
+function createParticles(x, y, count) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: x,
+      y: y,
+      vx: (Math.random() - 0.5) * 4,
+      vy: -Math.random() * 3,
+      life: 1,
+      size: 2 + Math.random() * 3
+    });
+  }
+}
+
 function resetGame() {
   car = {
-    x: 200,
+    x: 300,
     y: 200,
     vx: 0,
     vy: 0,
     angle: 0,
+    angularVel: 0,
     wheelAngle: 0,
-    onGround: false
+    onGround: false,
+    leftSuspension: 0,
+    rightSuspension: 0,
+    fuel: MAX_FUEL
   };
   camera = { x: 0, y: 0 };
   distance = 0;
+  coinsCollected = 0;
+  particles = [];
+  terrainOffset = 0;
+  gameRunning = true;
+  gameOverEl.style.display = 'none';
   generateTerrain();
+  fuelFill.style.width = '100%';
+}
+
+function gameOver() {
+  gameRunning = false;
+  finalDistanceEl.textContent = distance;
+  finalCoinsEl.textContent = coinsCollected;
+  gameOverEl.style.display = 'block';
 }
 
 function update() {
+  if (!gameRunning) return;
+  
   const accelerating = keys['ArrowRight'];
   const braking = keys['ArrowLeft'];
   const jumping = keys[' '];
   
-  if (accelerating) {
+  if (accelerating && car.fuel > 0) {
     car.vx += ACCELERATION;
+    car.fuel -= FUEL_CONSUMPTION;
   }
-  if (braking) {
+  if (braking && car.fuel > 0) {
     car.vx -= BRAKE_FORCE;
+    car.fuel -= FUEL_CONSUMPTION * 0.5;
   }
-  if (jumping && car.onGround) {
+  if (jumping && car.onGround && car.fuel > 5) {
     car.vy = -JUMP_FORCE;
+    car.fuel -= 5;
+  }
+  
+  car.fuel = Math.max(0, car.fuel);
+  fuelFill.style.width = (car.fuel / MAX_FUEL * 100) + '%';
+  
+  if (car.fuel <= 0 && Math.abs(car.vx) < 0.1) {
+    gameOver();
+    return;
   }
   
   car.vx = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, car.vx));
-  car.vx *= 0.98;
+  car.vx *= 0.985;
   
   car.vy += GRAVITY;
   
   car.x += car.vx;
   car.y += car.vy;
   
-  const wheelLeftX = car.x - CAR_WIDTH / 2;
-  const wheelRightX = car.x + CAR_WIDTH / 2;
-  const wheelY = car.y + CAR_HEIGHT / 2;
+  const cos = Math.cos(car.angle);
+  const sin = Math.sin(car.angle);
+  
+  const wheelLeftX = car.x + cos * (-CAR_WIDTH / 2) - sin * (CAR_HEIGHT / 2);
+  const wheelLeftY = car.y + sin * (-CAR_WIDTH / 2) + cos * (CAR_HEIGHT / 2);
+  const wheelRightX = car.x + cos * (CAR_WIDTH / 2) - sin * (CAR_HEIGHT / 2);
+  const wheelRightY = car.y + sin * (CAR_WIDTH / 2) + cos * (CAR_HEIGHT / 2);
   
   const groundLeftY = getTerrainY(wheelLeftX);
   const groundRightY = getTerrainY(wheelRightX);
   
-  const leftContact = wheelY + WHEEL_RADIUS > groundLeftY;
-  const rightContact = wheelY + WHEEL_RADIUS > groundRightY;
+  const leftContact = wheelLeftY + WHEEL_RADIUS > groundLeftY;
+  const rightContact = wheelRightY + WHEEL_RADIUS > groundRightY;
   
+  const wasOnGround = car.onGround;
   car.onGround = leftContact || rightContact;
   
+  if (!wasOnGround && car.onGround && car.vy > 5) {
+    createParticles(car.x, car.y + CAR_HEIGHT / 2, 8);
+  }
+  
+  car.leftSuspension *= 0.85;
+  car.rightSuspension *= 0.85;
+  
   if (leftContact) {
-    const overlap = (wheelY + WHEEL_RADIUS) - groundLeftY;
-    car.y -= overlap * 0.5;
-    car.vy *= -0.3;
+    const penetration = (wheelLeftY + WHEEL_RADIUS) - groundLeftY;
+    car.leftSuspension = penetration;
+    const force = penetration * SUSPENSION_STRENGTH;
+    car.vy -= force;
+    car.vy *= SUSPENSION_DAMPING;
+    car.angularVel += force * 0.015;
   }
   
   if (rightContact) {
-    const overlap = (wheelY + WHEEL_RADIUS) - groundRightY;
-    car.y -= overlap * 0.5;
-    car.vy *= -0.3;
+    const penetration = (wheelRightY + WHEEL_RADIUS) - groundRightY;
+    car.rightSuspension = penetration;
+    const force = penetration * SUSPENSION_STRENGTH;
+    car.vy -= force;
+    car.vy *= SUSPENSION_DAMPING;
+    car.angularVel -= force * 0.015;
   }
   
   if (car.onGround) {
     const targetAngle = getTerrainAngle(car.x);
-    car.angle += (targetAngle - car.angle) * 0.15;
+    car.angle += (targetAngle - car.angle) * 0.12;
   }
   
-  car.wheelAngle += car.vx * 0.15;
+  car.angle += car.angularVel;
+  car.angularVel *= 0.92;
   
-  if (car.y > canvas.height + 300) {
+  car.wheelAngle += car.vx * 0.12;
+  
+  if (car.y > canvas.height + 500) {
     resetGame();
   }
   
-  camera.x += (car.x - canvas.width / 2 - camera.x) * 0.1;
-  camera.y += (car.y - canvas.height * 0.5 - camera.y) * 0.1;
+  camera.x += (car.x - canvas.width * 0.35 - camera.x) * 0.08;
+  camera.y += (car.y - canvas.height * 0.55 - camera.y) * 0.08;
+  
+  coins.forEach(coin => {
+    if (!coin.collected) {
+      const dx = car.x - coin.x;
+      const dy = car.y - coin.y;
+      if (Math.sqrt(dx * dx + dy * dy) < COIN_COLLECTION_RADIUS) {
+        coin.collected = true;
+        coinsCollected++;
+        car.fuel = Math.min(MAX_FUEL, car.fuel + 10);
+      }
+    }
+  });
+  
+  particles.forEach((p, i) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.3;
+    p.life -= 0.02;
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+    }
+  });
   
   distance = Math.max(distance, Math.floor(car.x / 10));
   distanceEl.textContent = distance;
+  coinsEl.textContent = coinsCollected;
   
   if (distance > bestDistance) {
     bestDistance = distance;
-    localStorage.setItem('hillClimberBest', bestDistance);
+    localStorage.setItem('hillClimbBest', bestDistance);
     bestEl.textContent = bestDistance;
   }
 }
 
 function render() {
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, '#87CEEB');
-  gradient.addColorStop(1, '#E0F6FF');
+  gradient.addColorStop(0, '#1e3a5f');
+  gradient.addColorStop(0.5, '#5a7ba6');
+  gradient.addColorStop(1, '#87CEEB');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
   ctx.save();
+  ctx.translate(-camera.x * 0.3, 0);
+  
+  clouds.forEach(cloud => {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.beginPath();
+    ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
+    ctx.arc(cloud.x + cloud.size * 0.7, cloud.y, cloud.size * 0.8, 0, Math.PI * 2);
+    ctx.arc(cloud.x + cloud.size * 1.4, cloud.y, cloud.size * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    cloud.x += cloud.speed;
+    if (cloud.x > camera.x + canvas.width + 200) {
+      cloud.x = camera.x - 200;
+    }
+  });
+  
+  ctx.restore();
+  
+  ctx.save();
   ctx.translate(-camera.x, -camera.y);
   
-  ctx.fillStyle = '#8B7355';
-  ctx.strokeStyle = '#654321';
-  ctx.lineWidth = 4;
+  ctx.fillStyle = '#6b8e23';
+  ctx.strokeStyle = '#556b2f';
+  ctx.lineWidth = 5;
   ctx.beginPath();
-  ctx.moveTo(terrain[0].x, canvas.height + camera.y + 500);
+  ctx.moveTo(terrain[0].x, canvas.height + camera.y + 1000);
   terrain.forEach(point => {
     ctx.lineTo(point.x, point.y);
   });
-  ctx.lineTo(terrain[terrain.length - 1].x, canvas.height + camera.y + 500);
+  ctx.lineTo(terrain[terrain.length - 1].x, canvas.height + camera.y + 1000);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
+  
+  ctx.strokeStyle = '#4a5f1f';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  terrain.forEach((point, i) => {
+    if (i === 0) ctx.moveTo(point.x, point.y);
+    else ctx.lineTo(point.x, point.y);
+  });
+  ctx.stroke();
+  
+  coins.forEach(coin => {
+    if (!coin.collected) {
+      ctx.save();
+      ctx.translate(coin.x, coin.y);
+      
+      ctx.fillStyle = '#FFD700';
+      ctx.strokeStyle = '#FFA500';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      
+      ctx.fillStyle = '#FFA500';
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('$', 0, 0);
+      
+      ctx.restore();
+    }
+  });
+  
+  particles.forEach(p => {
+    ctx.fillStyle = `rgba(139, 115, 85, ${p.life})`;
+    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+  });
+  
+  const shadowY = getTerrainY(car.x);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.beginPath();
+  ctx.ellipse(car.x, shadowY, CAR_WIDTH * 0.6, 15, 0, 0, Math.PI * 2);
+  ctx.fill();
   
   ctx.save();
   ctx.translate(car.x, car.y);
   ctx.rotate(car.angle);
   
-  ctx.fillStyle = '#E74C3C';
-  ctx.strokeStyle = '#C0392B';
-  ctx.lineWidth = 3;
-  ctx.fillRect(-CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT);
-  ctx.strokeRect(-CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT);
+  const bodyGradient = ctx.createLinearGradient(0, -CAR_HEIGHT / 2, 0, CAR_HEIGHT / 2);
+  bodyGradient.addColorStop(0, '#ff5555');
+  bodyGradient.addColorStop(1, '#cc0000');
+  ctx.fillStyle = bodyGradient;
+  ctx.strokeStyle = '#990000';
+  ctx.lineWidth = 4;
   
-  ctx.fillStyle = '#3498DB';
-  ctx.fillRect(-15, -CAR_HEIGHT / 2 + 5, 30, 15);
+  ctx.beginPath();
+  ctx.roundRect(-CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT, 8);
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.fillStyle = '#4dd0e1';
+  ctx.strokeStyle = '#0097a7';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(-25, -CAR_HEIGHT / 2 + 8, 50, 20, 4);
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.fillRect(-15, -CAR_HEIGHT / 2 + 10, 10, 8);
   
   ctx.restore();
   
-  function drawWheel(x, y) {
+  function drawWheel(x, y, suspension) {
     ctx.save();
-    ctx.translate(x, y);
+    ctx.translate(x, y + suspension * 0.5);
     ctx.rotate(car.wheelAngle);
     
-    ctx.fillStyle = '#2C3E50';
+    const wheelGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, WHEEL_RADIUS);
+    wheelGradient.addColorStop(0, '#444');
+    wheelGradient.addColorStop(0.7, '#222');
+    wheelGradient.addColorStop(1, '#000');
+    ctx.fillStyle = wheelGradient;
     ctx.beginPath();
     ctx.arc(0, 0, WHEEL_RADIUS, 0, Math.PI * 2);
     ctx.fill();
     
-    ctx.strokeStyle = '#34495E';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 4;
     ctx.stroke();
     
-    ctx.strokeStyle = '#7F8C8D';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2;
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(angle) * WHEEL_RADIUS, Math.sin(angle) * WHEEL_RADIUS);
+      ctx.lineTo(Math.cos(angle) * (WHEEL_RADIUS - 4), Math.sin(angle) * (WHEEL_RADIUS - 4));
       ctx.stroke();
     }
+    
+    ctx.fillStyle = '#555';
+    ctx.beginPath();
+    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+    ctx.fill();
     
     ctx.restore();
   }
@@ -313,8 +587,8 @@ function render() {
   const wheelRightX = car.x + cos * (CAR_WIDTH / 2) - sin * (CAR_HEIGHT / 2);
   const wheelRightY = car.y + sin * (CAR_WIDTH / 2) + cos * (CAR_HEIGHT / 2);
   
-  drawWheel(wheelLeftX, wheelLeftY);
-  drawWheel(wheelRightX, wheelRightY);
+  drawWheel(wheelLeftX, wheelLeftY, car.leftSuspension);
+  drawWheel(wheelRightX, wheelRightY, car.rightSuspension);
   
   ctx.restore();
 }
@@ -327,6 +601,7 @@ function gameLoop() {
 
 window.addEventListener('keydown', e => {
   keys[e.key] = true;
+  if (e.key === ' ') e.preventDefault();
 });
 
 window.addEventListener('keyup', e => {
@@ -334,8 +609,10 @@ window.addEventListener('keyup', e => {
 });
 
 restartBtn.addEventListener('click', resetGame);
+playAgainBtn.addEventListener('click', resetGame);
 
 generateTerrain();
+generateClouds();
 gameLoop();
 </script>
 </body>
