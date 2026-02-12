@@ -1,23 +1,553 @@
-* Use an HTML `<canvas>` for rendering. No external libraries or assets.
-* Implement simple physics: gravity, ground collision, wheel rotation, basic suspension (springy effect), friction, and torque for acceleration and braking.
-* Terrain: procedurally generated 2D hills using a seeded algorithm (Perlin-like or sine + randomness). Provide a fixed seed so results are reproducible.
-* Controls:
-   * Keyboard: Right arrow / D = accelerate; Left arrow / A = brake/reverse; Space = flip/reset.
-   * Touch: show two on-screen semi-transparent buttons for left and right when on mobile.
-* Car: body and two wheels. Wheels should rotate visually with movement and react to slopes (tilt the car to match chassis angle).
-* Gameplay:
-   * Score by distance traveled. Display current distance and best distance (persist best in `localStorage`).
-   * Reset or respawn when car flips upside-down for more than 2 seconds or falls off screen.
-   * Smooth camera that follows the car horizontally.
-* UI: Start screen with “Play” button, in-game HUD (distance, best), and a “Restart” button. Include simple instructions.
-* Code quality:
-   * Well-commented, modular functions, clear variable names.
-   * Include a short README comment at top describing controls and how to run.
-   * Keep file size modest. Avoid heavy computation each frame.
-* Compatibility: Runs in modern desktop and mobile browsers (Chrome, Firefox, Safari).
-* Bonus (optional if simple): add collectible stars on hills that increase score.
-Two tiny examples (illustrative only):
-* Controls example: `Right = accelerate`, `Left = brake`.
-* Seed example: `seed = 12345 → same terrain each run`.
-Output format:
-* Return only the full `.html` file content inside a single code block. No extra text.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hill Racer</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    background: #87CEEB;
+  }
+  canvas {
+    display: block;
+    background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
+  }
+  #ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  #startScreen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    background: rgba(255,255,255,0.9);
+    padding: 40px;
+    border-radius: 10px;
+    pointer-events: auto;
+  }
+  #startScreen h1 {
+    margin-bottom: 20px;
+    color: #333;
+  }
+  #startScreen p {
+    margin: 10px 0;
+    color: #666;
+  }
+  button {
+    padding: 15px 30px;
+    font-size: 18px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  button:hover {
+    background: #45a049;
+  }
+  #hud {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: white;
+    font-size: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    display: none;
+  }
+  #restartBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: none;
+    pointer-events: auto;
+  }
+  .touchBtn {
+    position: absolute;
+    bottom: 30px;
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.3);
+    border: 3px solid rgba(255,255,255,0.5);
+    border-radius: 50%;
+    display: none;
+    pointer-events: auto;
+    font-size: 30px;
+    color: white;
+    text-align: center;
+    line-height: 80px;
+    user-select: none;
+  }
+  #leftBtn {
+    left: 30px;
+  }
+  #rightBtn {
+    right: 30px;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="ui">
+  <div id="startScreen">
+    <h1>🚗 Hill Racer</h1>
+    <p><strong>Desktop:</strong> Arrow Keys or A/D to drive, Space to flip/reset</p>
+    <p><strong>Mobile:</strong> Use on-screen buttons</p>
+    <p>Drive as far as you can without flipping!</p>
+    <button id="playBtn">Play</button>
+  </div>
+  <div id="hud">
+    <div>Distance: <span id="distance">0</span>m</div>
+    <div>Best: <span id="best">0</span>m</div>
+  </div>
+  <button id="restartBtn">Restart</button>
+  <div id="leftBtn" class="touchBtn">←</div>
+  <div id="rightBtn" class="touchBtn">→</div>
+</div>
+
+<script>
+// ===== HILL RACER =====
+// Controls: Arrow Keys or A/D (accelerate right, brake/reverse left), Space (flip/reset)
+// Mobile: Touch buttons
+// Goal: Drive as far as possible without flipping
+// Seed: 12345 for reproducible terrain
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const startScreen = document.getElementById('startScreen');
+const playBtn = document.getElementById('playBtn');
+const hud = document.getElementById('hud');
+const restartBtn = document.getElementById('restartBtn');
+const distanceEl = document.getElementById('distance');
+const bestEl = document.getElementById('best');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+
+// Canvas sizing
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// Game constants
+const GRAVITY = 0.5;
+const GROUND_Y = canvas.height - 100;
+const WHEEL_RADIUS = 15;
+const CAR_WIDTH = 60;
+const CAR_HEIGHT = 30;
+const SUSPENSION_STRENGTH = 0.3;
+const SUSPENSION_DAMPING = 0.7;
+const FRICTION = 0.98;
+const ACCELERATION = 0.3;
+const BRAKE_FORCE = 0.2;
+const MAX_SPEED = 15;
+const TERRAIN_SEED = 12345;
+const SEGMENT_WIDTH = 20;
+const FLIP_TIME = 2; // seconds upside down before reset
+
+// Game state
+let gameRunning = false;
+let keys = {};
+let touchLeft = false;
+let touchRight = false;
+
+// Car physics
+let car = {
+  x: 200,
+  y: 300,
+  vx: 0,
+  vy: 0,
+  angle: 0,
+  angularVel: 0,
+  wheelAngle: 0,
+  onGround: false,
+  flippedTime: 0
+};
+
+// Camera
+let camera = { x: 0 };
+
+// Terrain
+let terrain = [];
+let stars = [];
+
+// Score
+let distance = 0;
+let bestDistance = parseInt(localStorage.getItem('hillRacerBest') || '0');
+bestEl.textContent = bestDistance;
+
+// Random number generator with seed
+class SeededRandom {
+  constructor(seed) {
+    this.seed = seed;
+  }
+  next() {
+    this.seed = (this.seed * 9301 + 49297) % 233280;
+    return this.seed / 233280;
+  }
+}
+
+// Generate terrain
+function generateTerrain() {
+  const rng = new SeededRandom(TERRAIN_SEED);
+  terrain = [];
+  stars = [];
+  
+  let y = GROUND_Y;
+  for (let i = 0; i < 500; i++) {
+    const x = i * SEGMENT_WIDTH;
+    // Simple hills using sine waves and randomness
+    const wave1 = Math.sin(i * 0.02) * 50;
+    const wave2 = Math.sin(i * 0.05) * 30;
+    const noise = (rng.next() - 0.5) * 20;
+    y = GROUND_Y + wave1 + wave2 + noise;
+    terrain.push({ x, y });
+    
+    // Add stars occasionally
+    if (i > 10 && i % 15 === 0 && rng.next() > 0.5) {
+      stars.push({ x: x, y: y - 50, collected: false });
+    }
+  }
+}
+
+// Get terrain height at x position
+function getTerrainY(x) {
+  const index = Math.floor(x / SEGMENT_WIDTH);
+  if (index < 0) return terrain[0].y;
+  if (index >= terrain.length - 1) return terrain[terrain.length - 1].y;
+  
+  const p1 = terrain[index];
+  const p2 = terrain[index + 1];
+  const t = (x - p1.x) / SEGMENT_WIDTH;
+  return p1.y + (p2.y - p1.y) * t;
+}
+
+// Get terrain angle at x position
+function getTerrainAngle(x) {
+  const index = Math.floor(x / SEGMENT_WIDTH);
+  if (index < 0 || index >= terrain.length - 1) return 0;
+  
+  const p1 = terrain[index];
+  const p2 = terrain[index + 1];
+  return Math.atan2(p2.y - p1.y, p2.x - p1.x);
+}
+
+// Reset car position
+function resetCar() {
+  car.x = 200;
+  car.y = 300;
+  car.vx = 0;
+  car.vy = 0;
+  car.angle = 0;
+  car.angularVel = 0;
+  car.wheelAngle = 0;
+  car.flippedTime = 0;
+  camera.x = 0;
+  distance = 0;
+  
+  // Reset stars
+  stars.forEach(star => star.collected = false);
+}
+
+// Start game
+function startGame() {
+  startScreen.style.display = 'none';
+  hud.style.display = 'block';
+  restartBtn.style.display = 'block';
+  
+  // Show touch buttons on mobile
+  if ('ontouchstart' in window) {
+    leftBtn.style.display = 'block';
+    rightBtn.style.display = 'block';
+  }
+  
+  generateTerrain();
+  resetCar();
+  gameRunning = true;
+  gameLoop();
+}
+
+// Game loop
+let lastTime = 0;
+function gameLoop(timestamp = 0) {
+  if (!gameRunning) return;
+  
+  const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1);
+  lastTime = timestamp;
+  
+  update(deltaTime);
+  render();
+  
+  requestAnimationFrame(gameLoop);
+}
+
+// Update physics
+function update(dt) {
+  if (dt === 0) return;
+  
+  // Apply controls
+  const accelerating = keys['ArrowRight'] || keys['d'] || keys['D'] || touchRight;
+  const braking = keys['ArrowLeft'] || keys['a'] || keys['A'] || touchLeft;
+  const flipping = keys[' '];
+  
+  if (accelerating) {
+    car.vx += ACCELERATION;
+  }
+  if (braking) {
+    car.vx -= BRAKE_FORCE;
+  }
+  if (flipping) {
+    resetCar();
+  }
+  
+  // Speed limit
+  car.vx = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, car.vx));
+  
+  // Apply friction
+  car.vx *= FRICTION;
+  
+  // Apply gravity
+  car.vy += GRAVITY;
+  
+  // Update position
+  car.x += car.vx;
+  car.y += car.vy;
+  
+  // Check wheel collisions with ground
+  const wheelLeft = { x: car.x - CAR_WIDTH / 2, y: car.y + CAR_HEIGHT / 2 };
+  const wheelRight = { x: car.x + CAR_WIDTH / 2, y: car.y + CAR_HEIGHT / 2 };
+  
+  const groundLeftY = getTerrainY(wheelLeft.x);
+  const groundRightY = getTerrainY(wheelRight.x);
+  
+  let leftOnGround = wheelLeft.y > groundLeftY - WHEEL_RADIUS;
+  let rightOnGround = wheelRight.y > groundRightY - WHEEL_RADIUS;
+  
+  car.onGround = leftOnGround || rightOnGround;
+  
+  // Suspension physics
+  if (leftOnGround) {
+    const penetration = (wheelLeft.y + WHEEL_RADIUS) - groundLeftY;
+    car.vy -= penetration * SUSPENSION_STRENGTH;
+    car.vy *= SUSPENSION_DAMPING;
+    car.angularVel += penetration * 0.01;
+  }
+  
+  if (rightOnGround) {
+    const penetration = (wheelRight.y + WHEEL_RADIUS) - groundRightY;
+    car.vy -= penetration * SUSPENSION_STRENGTH;
+    car.vy *= SUSPENSION_DAMPING;
+    car.angularVel -= penetration * 0.01;
+  }
+  
+  // Update car angle based on terrain
+  if (car.onGround) {
+    const targetAngle = getTerrainAngle(car.x);
+    car.angle += (targetAngle - car.angle) * 0.1;
+  }
+  
+  // Apply angular velocity
+  car.angle += car.angularVel;
+  car.angularVel *= 0.95;
+  
+  // Update wheel rotation
+  car.wheelAngle += car.vx * 0.1;
+  
+  // Check for flip
+  const normalizedAngle = ((car.angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  const isFlipped = normalizedAngle > Math.PI / 2 && normalizedAngle < Math.PI * 1.5;
+  
+  if (isFlipped && car.onGround) {
+    car.flippedTime += dt;
+    if (car.flippedTime > FLIP_TIME) {
+      resetCar();
+    }
+  } else {
+    car.flippedTime = 0;
+  }
+  
+  // Check if fell off screen
+  if (car.y > canvas.height + 200) {
+    resetCar();
+  }
+  
+  // Update camera
+  camera.x += (car.x - canvas.width / 3 - camera.x) * 0.1;
+  
+  // Update distance
+  distance = Math.max(distance, Math.floor(car.x / 10));
+  distanceEl.textContent = distance;
+  
+  if (distance > bestDistance) {
+    bestDistance = distance;
+    localStorage.setItem('hillRacerBest', bestDistance);
+    bestEl.textContent = bestDistance;
+  }
+  
+  // Check star collection
+  stars.forEach(star => {
+    if (!star.collected) {
+      const dx = car.x - star.x;
+      const dy = car.y - star.y;
+      if (Math.sqrt(dx * dx + dy * dy) < 30) {
+        star.collected = true;
+        distance += 10;
+      }
+    }
+  });
+}
+
+// Render
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.save();
+  ctx.translate(-camera.x, 0);
+  
+  // Draw terrain
+  ctx.fillStyle = '#8B7355';
+  ctx.beginPath();
+  ctx.moveTo(terrain[0].x, canvas.height);
+  terrain.forEach(point => {
+    ctx.lineTo(point.x, point.y);
+  });
+  ctx.lineTo(terrain[terrain.length - 1].x, canvas.height);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Draw terrain outline
+  ctx.strokeStyle = '#654321';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  terrain.forEach((point, i) => {
+    if (i === 0) ctx.moveTo(point.x, point.y);
+    else ctx.lineTo(point.x, point.y);
+  });
+  ctx.stroke();
+  
+  // Draw stars
+  stars.forEach(star => {
+    if (!star.collected) {
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const angle = (i * 4 * Math.PI / 5) - Math.PI / 2;
+        const radius = i % 2 === 0 ? 12 : 6;
+        const x = star.x + Math.cos(angle) * radius;
+        const y = star.y + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+  });
+  
+  // Draw car
+  ctx.save();
+  ctx.translate(car.x, car.y);
+  ctx.rotate(car.angle);
+  
+  // Car body
+  ctx.fillStyle = '#E74C3C';
+  ctx.fillRect(-CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT);
+  ctx.strokeStyle = '#C0392B';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(-CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT);
+  
+  // Window
+  ctx.fillStyle = '#3498DB';
+  ctx.fillRect(-10, -CAR_HEIGHT / 2 + 5, 20, 10);
+  
+  ctx.restore();
+  
+  // Draw wheels
+  function drawWheel(x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(car.wheelAngle);
+    
+    ctx.fillStyle = '#2C3E50';
+    ctx.beginPath();
+    ctx.arc(0, 0, WHEEL_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#95A5A6';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -WHEEL_RADIUS);
+    ctx.stroke();
+    
+    ctx.restore();
+  }
+  
+  const wheelLeftX = car.x + Math.cos(car.angle) * (-CAR_WIDTH / 2) - Math.sin(car.angle) * (CAR_HEIGHT / 2);
+  const wheelLeftY = car.y + Math.sin(car.angle) * (-CAR_WIDTH / 2) + Math.cos(car.angle) * (CAR_HEIGHT / 2);
+  const wheelRightX = car.x + Math.cos(car.angle) * (CAR_WIDTH / 2) - Math.sin(car.angle) * (CAR_HEIGHT / 2);
+  const wheelRightY = car.y + Math.sin(car.angle) * (CAR_WIDTH / 2) + Math.cos(car.angle) * (CAR_HEIGHT / 2);
+  
+  drawWheel(wheelLeftX, wheelLeftY);
+  drawWheel(wheelRightX, wheelRightY);
+  
+  ctx.restore();
+}
+
+// Event listeners
+playBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', () => {
+  resetCar();
+});
+
+window.addEventListener('keydown', e => {
+  keys[e.key] = true;
+});
+
+window.addEventListener('keyup', e => {
+  keys[e.key] = false;
+});
+
+// Touch controls
+leftBtn.addEventListener('touchstart', e => {
+  e.preventDefault();
+  touchLeft = true;
+});
+
+leftBtn.addEventListener('touchend', e => {
+  e.preventDefault();
+  touchLeft = false;
+});
+
+rightBtn.addEventListener('touchstart', e => {
+  e.preventDefault();
+  touchRight = true;
+});
+
+rightBtn.addEventListener('touchend', e => {
+  e.preventDefault();
+  touchRight = false;
+});
+
+// Mouse controls for touch buttons
+leftBtn.addEventListener('mousedown', () => touchLeft = true);
+leftBtn.addEventListener('mouseup', () => touchLeft = false);
+rightBtn.addEventListener('mousedown', () => touchRight = true);
+rightBtn.addEventListener('mouseup', () => touchRight = false);
+</script>
+</body>
+</html>
