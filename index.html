@@ -1,0 +1,23 @@
+* Use an HTML `<canvas>` for rendering. No external libraries or assets.
+* Implement simple physics: gravity, ground collision, wheel rotation, basic suspension (springy effect), friction, and torque for acceleration and braking.
+* Terrain: procedurally generated 2D hills using a seeded algorithm (Perlin-like or sine + randomness). Provide a fixed seed so results are reproducible.
+* Controls:
+   * Keyboard: Right arrow / D = accelerate; Left arrow / A = brake/reverse; Space = flip/reset.
+   * Touch: show two on-screen semi-transparent buttons for left and right when on mobile.
+* Car: body and two wheels. Wheels should rotate visually with movement and react to slopes (tilt the car to match chassis angle).
+* Gameplay:
+   * Score by distance traveled. Display current distance and best distance (persist best in `localStorage`).
+   * Reset or respawn when car flips upside-down for more than 2 seconds or falls off screen.
+   * Smooth camera that follows the car horizontally.
+* UI: Start screen with “Play” button, in-game HUD (distance, best), and a “Restart” button. Include simple instructions.
+* Code quality:
+   * Well-commented, modular functions, clear variable names.
+   * Include a short README comment at top describing controls and how to run.
+   * Keep file size modest. Avoid heavy computation each frame.
+* Compatibility: Runs in modern desktop and mobile browsers (Chrome, Firefox, Safari).
+* Bonus (optional if simple): add collectible stars on hills that increase score.
+Two tiny examples (illustrative only):
+* Controls example: `Right = accelerate`, `Left = brake`.
+* Seed example: `seed = 12345 → same terrain each run`.
+Output format:
+* Return only the full `.html` file content inside a single code block. No extra text.
