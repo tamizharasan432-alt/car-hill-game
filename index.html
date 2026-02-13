@@ -3,21 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hill Climb Racing</title>
+<title>Hill Climb Racing - Enhanced Edition</title>
 <style>
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
 body {
   overflow: hidden;
   font-family: 'Arial', sans-serif;
   background: #000;
 }
+
 canvas {
   display: block;
+  background: #87CEEB;
 }
+
 #ui {
   position: absolute;
   top: 0;
@@ -25,173 +29,336 @@ canvas {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  z-index: 10;
 }
-#hud {
+
+/* HUD */
+.hud {
   position: absolute;
   top: 20px;
   left: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 15px 20px;
+  border-radius: 12px;
   color: white;
-  font-size: 28px;
-  text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+  font-size: 18px;
   font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
 }
-#fuelBar {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 200px;
-  height: 30px;
-  background: rgba(0,0,0,0.7);
-  border: 3px solid white;
-  border-radius: 15px;
-  overflow: hidden;
+
+.hud-item {
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-#fuelFill {
-  height: 100%;
-  background: linear-gradient(to right, #ff4444, #ffaa00, #44ff44);
-  width: 100%;
-  transition: width 0.3s;
+
+.hud-icon {
+  font-size: 24px;
 }
-#restartBtn {
+
+.hud-value {
+  color: #FFD700;
+  font-size: 20px;
+}
+
+/* Fuel Bar */
+.fuel-container {
   position: absolute;
   top: 20px;
   right: 20px;
-  padding: 15px 30px;
-  font-size: 20px;
-  background: linear-gradient(to bottom, #4CAF50, #388E3C);
+  width: 200px;
+}
+
+.fuel-label {
   color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  pointer-events: auto;
-  box-shadow: 0 6px 10px rgba(0,0,0,0.5);
   font-weight: bold;
+  margin-bottom: 5px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
-#restartBtn:hover {
-  background: linear-gradient(to bottom, #45a049, #2E7D32);
+
+.fuel-bar {
+  width: 100%;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 3px solid white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
-#restartBtn:active {
-  transform: translateY(3px);
-  box-shadow: 0 3px 5px rgba(0,0,0,0.5);
+
+.fuel-fill {
+  height: 100%;
+  background: linear-gradient(to right, #ff4444, #ffaa00, #44ff44);
+  transition: width 0.3s ease;
+  position: relative;
 }
-#gameOver {
+
+.fuel-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.fuel-fill.low {
+  animation: fuelFlash 0.5s infinite;
+}
+
+@keyframes fuelFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Speedometer */
+.speedometer {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.95));
+  border-radius: 50%;
+  border: 4px solid #FFD700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.speed-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #00ff88;
+  text-shadow: 0 0 10px #00ff88;
+}
+
+.speed-unit {
+  font-size: 14px;
+  color: #aaa;
+  margin-top: -5px;
+}
+
+/* Milestone Message */
+.milestone {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(0,0,0,0.9);
-  padding: 40px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+  padding: 25px 50px;
   border-radius: 20px;
+  font-size: 32px;
+  font-weight: bold;
+  box-shadow: 0 10px 40px rgba(255, 215, 0, 0.6);
+  animation: milestoneAnim 2s ease-out forwards;
+  pointer-events: none;
+  z-index: 100;
+}
+
+@keyframes milestoneAnim {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+}
+
+/* Controls */
+.controls {
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 15px 20px;
+  border-radius: 12px;
   color: white;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+}
+
+.controls div {
+  margin: 5px 0;
+}
+
+/* Game Over */
+.game-over {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.95);
+  padding: 40px 60px;
+  border-radius: 20px;
   text-align: center;
+  color: white;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
   display: none;
   pointer-events: auto;
 }
-#gameOver h1 {
+
+.game-over.show {
+  display: block;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.game-over h1 {
   font-size: 48px;
   margin-bottom: 20px;
   color: #ff4444;
 }
-#gameOver p {
+
+.game-over p {
   font-size: 24px;
   margin: 10px 0;
+  color: #FFD700;
 }
-#gameOver button {
-  margin-top: 20px;
+
+.game-over button {
+  margin-top: 30px;
   padding: 15px 40px;
-  font-size: 22px;
-  background: #4CAF50;
+  font-size: 20px;
+  background: linear-gradient(135deg, #4CAF50, #388E3C);
   color: white;
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.game-over button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hud {
+    font-size: 14px;
+    padding: 10px 15px;
+  }
+  
+  .speedometer {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .speed-value {
+    font-size: 24px;
+  }
+  
+  .controls {
+    display: none;
+  }
 }
 </style>
 </head>
 <body>
+
 <canvas id="canvas"></canvas>
+
 <div id="ui">
-  <div id="hud">
-    <div>Distance: <span id="distance">0</span>m</div>
-    <div>Best: <span id="best">0</span>m</div>
-    <div>Coins: <span id="coins">0</span></div>
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-item">
+      <span class="hud-icon">📏</span>
+      <span>Distance: <span class="hud-value" id="distance">0</span>m</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-icon">💰</span>
+      <span>Coins: <span class="hud-value" id="coins">0</span></span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-icon">🏆</span>
+      <span>Best: <span class="hud-value" id="best">0</span>m</span>
+    </div>
   </div>
-  <div id="fuelBar">
-    <div id="fuelFill"></div>
+
+  <!-- Fuel Bar -->
+  <div class="fuel-container">
+    <div class="fuel-label">⛽ Fuel</div>
+    <div class="fuel-bar">
+      <div class="fuel-fill" id="fuelFill"></div>
+    </div>
   </div>
-  <button id="restartBtn">Restart</button>
-  <div id="gameOver">
-    <h1>Out of Fuel!</h1>
+
+  <!-- Speedometer -->
+  <div class="speedometer">
+    <div class="speed-value" id="speedValue">0</div>
+    <div class="speed-unit">km/h</div>
+  </div>
+
+  <!-- Controls Info -->
+  <div class="controls">
+    <div>⬆️ Accelerate: Arrow Up / W</div>
+    <div>⬇️ Brake: Arrow Down / S</div>
+    <div>🔄 Restart: R</div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="game-over" id="gameOver">
+    <h1>⛽ Out of Fuel!</h1>
     <p>Distance: <span id="finalDistance">0</span>m</p>
     <p>Coins: <span id="finalCoins">0</span></p>
-    <button id="playAgainBtn">Play Again</button>
+    <button id="restartBtn">🔄 Play Again</button>
   </div>
 </div>
+
 <script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const distanceEl = document.getElementById('distance');
-const bestEl = document.getElementById('best');
-const coinsEl = document.getElementById('coins');
-const fuelFill = document.getElementById('fuelFill');
-const restartBtn = document.getElementById('restartBtn');
-const gameOverEl = document.getElementById('gameOver');
-const finalDistanceEl = document.getElementById('finalDistance');
-const finalCoinsEl = document.getElementById('finalCoins');
-const playAgainBtn = document.getElementById('playAgainBtn');
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-window.addEventListener('resize', () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
-
-const GRAVITY = 0.8;
-const WHEEL_RADIUS = 24;
-const CAR_WIDTH = 100;
-const CAR_HEIGHT = 50;
-const ACCELERATION = 0.5;
-const BRAKE_FORCE = 0.4;
-const MAX_SPEED = 14;
-const JUMP_FORCE = 18;
-const TERRAIN_SEGMENT = 40;
-const SUSPENSION_STRENGTH = 0.4;
-const SUSPENSION_DAMPING = 0.8;
-const MAX_FUEL = 100;
-const FUEL_CONSUMPTION = 0.015;
-const COIN_COLLECTION_RADIUS = 40;
-
-let car = {
-  x: 300,
-  y: 200,
-  vx: 0,
-  vy: 0,
-  angle: 0,
-  angularVel: 0,
-  wheelAngle: 0,
-  onGround: false,
-  leftSuspension: 0,
-  rightSuspension: 0,
-  fuel: MAX_FUEL
+// ============================================
+// GAME CONFIGURATION
+// ============================================
+const CONFIG = {
+  GRAVITY: 0.8,
+  WHEEL_RADIUS: 20,
+  CAR_WIDTH: 90,
+  CAR_HEIGHT: 45,
+  ACCELERATION: 0.6,
+  BRAKE_FORCE: 0.5,
+  MAX_SPEED: 16,
+  TERRAIN_SEGMENT: 35,
+  SUSPENSION_STRENGTH: 0.5,
+  SUSPENSION_DAMPING: 0.75,
+  MAX_FUEL: 100,
+  FUEL_CONSUMPTION: 0.012,
+  COIN_RADIUS: 12,
+  COIN_VALUE: 10,
+  FUEL_PICKUP_VALUE: 25
 };
 
-let camera = { x: 0, y: 0 };
-let terrain = [];
-let coins = [];
-let particles = [];
-let clouds = [];
-let distance = 0;
-let coinsCollected = 0;
-let bestDistance = parseInt(localStorage.getItem('hillClimbBest') || '0');
-let keys = {};
-let gameRunning = true;
-let terrainOffset = 0;
-
-bestEl.textContent = bestDistance;
-
+// ============================================
+// UTILITIES
+// ============================================
 class Random {
   constructor(seed) {
     this.seed = seed;
@@ -202,418 +369,747 @@ class Random {
   }
 }
 
-function generateTerrain() {
-  terrain = [];
-  coins = [];
-  const rng = new Random(12345);
-  let baseY = canvas.height * 0.65;
-  
-  for (let i = 0; i < 1000; i++) {
-    const x = i * TERRAIN_SEGMENT;
-    const wave1 = Math.sin(i * 0.02) * 100;
-    const wave2 = Math.sin(i * 0.05) * 60;
-    const wave3 = Math.cos(i * 0.08) * 40;
-    const noise = (rng.next() - 0.5) * 25;
-    const y = baseY + wave1 + wave2 + wave3 + noise;
-    terrain.push({ x, y });
-    
-    if (i > 5 && i % 12 === 0 && rng.next() > 0.4) {
-      coins.push({ x: x, y: y - 80, collected: false });
+// ============================================
+// PARTICLE SYSTEM
+// ============================================
+class ParticleSystem {
+  constructor() {
+    this.particles = [];
+  }
+
+  emit(x, y, count, type = 'dust') {
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        x: x + (Math.random() - 0.5) * 10,
+        y: y + (Math.random() - 0.5) * 10,
+        vx: (Math.random() - 0.5) * (type === 'spark' ? 8 : 4),
+        vy: -Math.random() * (type === 'spark' ? 6 : 3),
+        life: 1,
+        maxLife: type === 'spark' ? 0.5 : 1,
+        size: type === 'spark' ? 3 + Math.random() * 2 : 2 + Math.random() * 4,
+        type: type,
+        color: type === 'spark' ? `hsl(${30 + Math.random() * 30}, 100%, 60%)` : 'rgba(139, 115, 85, 0.8)'
+      });
     }
   }
-}
 
-function generateClouds() {
-  clouds = [];
-  const rng = new Random(54321);
-  for (let i = 0; i < 15; i++) {
-    clouds.push({
-      x: rng.next() * canvas.width * 3,
-      y: rng.next() * canvas.height * 0.4,
-      size: 40 + rng.next() * 60,
-      speed: 0.1 + rng.next() * 0.2
-    });
-  }
-}
-
-function getTerrainY(x) {
-  const index = Math.floor(x / TERRAIN_SEGMENT);
-  if (index < 0) return terrain[0]?.y || canvas.height * 0.65;
-  if (index >= terrain.length - 1) return terrain[terrain.length - 1]?.y || canvas.height * 0.65;
-  
-  const p1 = terrain[index];
-  const p2 = terrain[index + 1];
-  const t = (x - p1.x) / TERRAIN_SEGMENT;
-  return p1.y + (p2.y - p1.y) * t;
-}
-
-function getTerrainAngle(x) {
-  const index = Math.floor(x / TERRAIN_SEGMENT);
-  if (index < 0 || index >= terrain.length - 1) return 0;
-  
-  const p1 = terrain[index];
-  const p2 = terrain[index + 1];
-  return Math.atan2(p2.y - p1.y, p2.x - p1.x);
-}
-
-function createParticles(x, y, count) {
-  for (let i = 0; i < count; i++) {
-    particles.push({
-      x: x,
-      y: y,
-      vx: (Math.random() - 0.5) * 4,
-      vy: -Math.random() * 3,
-      life: 1,
-      size: 2 + Math.random() * 3
-    });
-  }
-}
-
-function resetGame() {
-  car = {
-    x: 300,
-    y: 200,
-    vx: 0,
-    vy: 0,
-    angle: 0,
-    angularVel: 0,
-    wheelAngle: 0,
-    onGround: false,
-    leftSuspension: 0,
-    rightSuspension: 0,
-    fuel: MAX_FUEL
-  };
-  camera = { x: 0, y: 0 };
-  distance = 0;
-  coinsCollected = 0;
-  particles = [];
-  terrainOffset = 0;
-  gameRunning = true;
-  gameOverEl.style.display = 'none';
-  generateTerrain();
-  fuelFill.style.width = '100%';
-}
-
-function gameOver() {
-  gameRunning = false;
-  finalDistanceEl.textContent = distance;
-  finalCoinsEl.textContent = coinsCollected;
-  gameOverEl.style.display = 'block';
-}
-
-function update() {
-  if (!gameRunning) return;
-  
-  const accelerating = keys['ArrowRight'];
-  const braking = keys['ArrowLeft'];
-  const jumping = keys[' '];
-  
-  if (accelerating && car.fuel > 0) {
-    car.vx += ACCELERATION;
-    car.fuel -= FUEL_CONSUMPTION;
-  }
-  if (braking && car.fuel > 0) {
-    car.vx -= BRAKE_FORCE;
-    car.fuel -= FUEL_CONSUMPTION * 0.5;
-  }
-  if (jumping && car.onGround && car.fuel > 5) {
-    car.vy = -JUMP_FORCE;
-    car.fuel -= 5;
-  }
-  
-  car.fuel = Math.max(0, car.fuel);
-  fuelFill.style.width = (car.fuel / MAX_FUEL * 100) + '%';
-  
-  if (car.fuel <= 0 && Math.abs(car.vx) < 0.1) {
-    gameOver();
-    return;
-  }
-  
-  car.vx = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, car.vx));
-  car.vx *= 0.985;
-  
-  car.vy += GRAVITY;
-  
-  car.x += car.vx;
-  car.y += car.vy;
-  
-  const cos = Math.cos(car.angle);
-  const sin = Math.sin(car.angle);
-  
-  const wheelLeftX = car.x + cos * (-CAR_WIDTH / 2) - sin * (CAR_HEIGHT / 2);
-  const wheelLeftY = car.y + sin * (-CAR_WIDTH / 2) + cos * (CAR_HEIGHT / 2);
-  const wheelRightX = car.x + cos * (CAR_WIDTH / 2) - sin * (CAR_HEIGHT / 2);
-  const wheelRightY = car.y + sin * (CAR_WIDTH / 2) + cos * (CAR_HEIGHT / 2);
-  
-  const groundLeftY = getTerrainY(wheelLeftX);
-  const groundRightY = getTerrainY(wheelRightX);
-  
-  const leftContact = wheelLeftY + WHEEL_RADIUS > groundLeftY;
-  const rightContact = wheelRightY + WHEEL_RADIUS > groundRightY;
-  
-  const wasOnGround = car.onGround;
-  car.onGround = leftContact || rightContact;
-  
-  if (!wasOnGround && car.onGround && car.vy > 5) {
-    createParticles(car.x, car.y + CAR_HEIGHT / 2, 8);
-  }
-  
-  car.leftSuspension *= 0.85;
-  car.rightSuspension *= 0.85;
-  
-  if (leftContact) {
-    const penetration = (wheelLeftY + WHEEL_RADIUS) - groundLeftY;
-    car.leftSuspension = penetration;
-    const force = penetration * SUSPENSION_STRENGTH;
-    car.vy -= force;
-    car.vy *= SUSPENSION_DAMPING;
-    car.angularVel += force * 0.015;
-  }
-  
-  if (rightContact) {
-    const penetration = (wheelRightY + WHEEL_RADIUS) - groundRightY;
-    car.rightSuspension = penetration;
-    const force = penetration * SUSPENSION_STRENGTH;
-    car.vy -= force;
-    car.vy *= SUSPENSION_DAMPING;
-    car.angularVel -= force * 0.015;
-  }
-  
-  if (car.onGround) {
-    const targetAngle = getTerrainAngle(car.x);
-    car.angle += (targetAngle - car.angle) * 0.12;
-  }
-  
-  car.angle += car.angularVel;
-  car.angularVel *= 0.92;
-  
-  car.wheelAngle += car.vx * 0.12;
-  
-  if (car.y > canvas.height + 500) {
-    resetGame();
-  }
-  
-  camera.x += (car.x - canvas.width * 0.35 - camera.x) * 0.08;
-  camera.y += (car.y - canvas.height * 0.55 - camera.y) * 0.08;
-  
-  coins.forEach(coin => {
-    if (!coin.collected) {
-      const dx = car.x - coin.x;
-      const dy = car.y - coin.y;
-      if (Math.sqrt(dx * dx + dy * dy) < COIN_COLLECTION_RADIUS) {
-        coin.collected = true;
-        coinsCollected++;
-        car.fuel = Math.min(MAX_FUEL, car.fuel + 10);
+  update() {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.4;
+      p.life -= 0.02;
+      
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
       }
     }
-  });
-  
-  particles.forEach((p, i) => {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += 0.3;
-    p.life -= 0.02;
-    if (p.life <= 0) {
-      particles.splice(i, 1);
-    }
-  });
-  
-  distance = Math.max(distance, Math.floor(car.x / 10));
-  distanceEl.textContent = distance;
-  coinsEl.textContent = coinsCollected;
-  
-  if (distance > bestDistance) {
-    bestDistance = distance;
-    localStorage.setItem('hillClimbBest', bestDistance);
-    bestEl.textContent = bestDistance;
+  }
+
+  render(ctx, camera) {
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+    
+    this.particles.forEach(p => {
+      const alpha = p.life / p.maxLife;
+      if (p.type === 'spark') {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = alpha;
+      } else {
+        ctx.fillStyle = `rgba(139, 115, 85, ${alpha * 0.8})`;
+      }
+      ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    });
+    
+    ctx.restore();
   }
 }
 
-function render() {
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, '#1e3a5f');
-  gradient.addColorStop(0.5, '#5a7ba6');
-  gradient.addColorStop(1, '#87CEEB');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  ctx.save();
-  ctx.translate(-camera.x * 0.3, 0);
-  
-  clouds.forEach(cloud => {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.beginPath();
-    ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
-    ctx.arc(cloud.x + cloud.size * 0.7, cloud.y, cloud.size * 0.8, 0, Math.PI * 2);
-    ctx.arc(cloud.x + cloud.size * 1.4, cloud.y, cloud.size * 0.6, 0, Math.PI * 2);
-    ctx.fill();
-    cloud.x += cloud.speed;
-    if (cloud.x > camera.x + canvas.width + 200) {
-      cloud.x = camera.x - 200;
+// ============================================
+// CLOUD SYSTEM
+// ============================================
+class CloudSystem {
+  constructor(canvasWidth, canvasHeight) {
+    this.clouds = [];
+    this.generateClouds(canvasWidth, canvasHeight);
+  }
+
+  generateClouds(width, height) {
+    const rng = new Random(54321);
+    for (let i = 0; i < 12; i++) {
+      this.clouds.push({
+        x: rng.next() * width * 3,
+        y: rng.next() * height * 0.4 + 50,
+        size: 50 + rng.next() * 80,
+        speed: 0.08 + rng.next() * 0.15,
+        opacity: 0.6 + rng.next() * 0.3
+      });
     }
-  });
-  
-  ctx.restore();
-  
-  ctx.save();
-  ctx.translate(-camera.x, -camera.y);
-  
-  ctx.fillStyle = '#6b8e23';
-  ctx.strokeStyle = '#556b2f';
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.moveTo(terrain[0].x, canvas.height + camera.y + 1000);
-  terrain.forEach(point => {
-    ctx.lineTo(point.x, point.y);
-  });
-  ctx.lineTo(terrain[terrain.length - 1].x, canvas.height + camera.y + 1000);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  
-  ctx.strokeStyle = '#4a5f1f';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  terrain.forEach((point, i) => {
-    if (i === 0) ctx.moveTo(point.x, point.y);
-    else ctx.lineTo(point.x, point.y);
-  });
-  ctx.stroke();
-  
-  coins.forEach(coin => {
-    if (!coin.collected) {
-      ctx.save();
-      ctx.translate(coin.x, coin.y);
-      
-      ctx.fillStyle = '#FFD700';
-      ctx.strokeStyle = '#FFA500';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, 15, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      
-      ctx.fillStyle = '#FFA500';
-      ctx.font = 'bold 16px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('$', 0, 0);
-      
-      ctx.restore();
-    }
-  });
-  
-  particles.forEach(p => {
-    ctx.fillStyle = `rgba(139, 115, 85, ${p.life})`;
-    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-  });
-  
-  const shadowY = getTerrainY(car.x);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-  ctx.beginPath();
-  ctx.ellipse(car.x, shadowY, CAR_WIDTH * 0.6, 15, 0, 0, Math.PI * 2);
-  ctx.fill();
-  
-  ctx.save();
-  ctx.translate(car.x, car.y);
-  ctx.rotate(car.angle);
-  
-  const bodyGradient = ctx.createLinearGradient(0, -CAR_HEIGHT / 2, 0, CAR_HEIGHT / 2);
-  bodyGradient.addColorStop(0, '#ff5555');
-  bodyGradient.addColorStop(1, '#cc0000');
-  ctx.fillStyle = bodyGradient;
-  ctx.strokeStyle = '#990000';
-  ctx.lineWidth = 4;
-  
-  ctx.beginPath();
-  ctx.roundRect(-CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT, 8);
-  ctx.fill();
-  ctx.stroke();
-  
-  ctx.fillStyle = '#4dd0e1';
-  ctx.strokeStyle = '#0097a7';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(-25, -CAR_HEIGHT / 2 + 8, 50, 20, 4);
-  ctx.fill();
-  ctx.stroke();
-  
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-  ctx.fillRect(-15, -CAR_HEIGHT / 2 + 10, 10, 8);
-  
-  ctx.restore();
-  
-  function drawWheel(x, y, suspension) {
+  }
+
+  update(camera, canvasWidth) {
+    this.clouds.forEach(cloud => {
+      cloud.x += cloud.speed;
+      if (cloud.x > camera.x + canvasWidth + 200) {
+        cloud.x = camera.x - 200;
+      }
+    });
+  }
+
+  render(ctx, camera) {
     ctx.save();
-    ctx.translate(x, y + suspension * 0.5);
-    ctx.rotate(car.wheelAngle);
+    ctx.translate(-camera.x * 0.3, 0);
     
-    const wheelGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, WHEEL_RADIUS);
+    this.clouds.forEach(cloud => {
+      ctx.fillStyle = `rgba(255, 255, 255, ${cloud.opacity})`;
+      ctx.beginPath();
+      ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
+      ctx.arc(cloud.x + cloud.size * 0.7, cloud.y, cloud.size * 0.8, 0, Math.PI * 2);
+      ctx.arc(cloud.x + cloud.size * 1.4, cloud.y, cloud.size * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    
+    ctx.restore();
+  }
+}
+
+// ============================================
+// TERRAIN SYSTEM
+// ============================================
+class Terrain {
+  constructor() {
+    this.points = [];
+    this.generate();
+  }
+
+  generate() {
+    const rng = new Random(12345);
+    let baseY = 400;
+    
+    for (let i = 0; i < 1000; i++) {
+      const x = i * CONFIG.TERRAIN_SEGMENT;
+      const wave1 = Math.sin(i * 0.025) * 120;
+      const wave2 = Math.sin(i * 0.06) * 70;
+      const wave3 = Math.cos(i * 0.1) * 45;
+      const noise = (rng.next() - 0.5) * 30;
+      const y = baseY + wave1 + wave2 + wave3 + noise;
+      this.points.push({ x, y });
+    }
+  }
+
+  getY(x) {
+    const index = Math.floor(x / CONFIG.TERRAIN_SEGMENT);
+    if (index < 0) return this.points[0]?.y || 400;
+    if (index >= this.points.length - 1) return this.points[this.points.length - 1]?.y || 400;
+    
+    const p1 = this.points[index];
+    const p2 = this.points[index + 1];
+    const t = (x - p1.x) / CONFIG.TERRAIN_SEGMENT;
+    return p1.y + (p2.y - p1.y) * t;
+  }
+
+  getAngle(x) {
+    const index = Math.floor(x / CONFIG.TERRAIN_SEGMENT);
+    if (index < 0 || index >= this.points.length - 1) return 0;
+    
+    const p1 = this.points[index];
+    const p2 = this.points[index + 1];
+    return Math.atan2(p2.y - p1.y, p2.x - p1.x);
+  }
+
+  render(ctx, camera, canvasHeight) {
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+    
+    // Ground fill
+    ctx.fillStyle = '#6b8e23';
+    ctx.strokeStyle = '#556b2f';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(this.points[0].x, canvasHeight + camera.y + 1000);
+    this.points.forEach(point => {
+      ctx.lineTo(point.x, point.y);
+    });
+    ctx.lineTo(this.points[this.points.length - 1].x, canvasHeight + camera.y + 1000);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    
+    // Grass detail
+    ctx.strokeStyle = '#4a5f1f';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    this.points.forEach((point, i) => {
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    });
+    ctx.stroke();
+    
+    ctx.restore();
+  }
+}
+
+// ============================================
+// COLLECTIBLES
+// ============================================
+class Collectibles {
+  constructor(terrain) {
+    this.coins = [];
+    this.fuelPickups = [];
+    this.generate(terrain);
+  }
+
+  generate(terrain) {
+    const rng = new Random(98765);
+    
+    // Generate coins
+    for (let i = 10; i < terrain.points.length; i += 15) {
+      if (rng.next() > 0.4) {
+        const x = terrain.points[i].x;
+        const y = terrain.points[i].y - 80;
+        this.coins.push({ x, y, collected: false, rotation: 0 });
+      }
+    }
+    
+    // Generate fuel pickups
+    for (let i = 20; i < terrain.points.length; i += 40) {
+      if (rng.next() > 0.6) {
+        const x = terrain.points[i].x;
+        const y = terrain.points[i].y - 70;
+        this.fuelPickups.push({ x, y, collected: false, pulse: 0 });
+      }
+    }
+  }
+
+  update() {
+    this.coins.forEach(coin => {
+      if (!coin.collected) {
+        coin.rotation += 0.1;
+      }
+    });
+    
+    this.fuelPickups.forEach(fuel => {
+      if (!fuel.collected) {
+        fuel.pulse += 0.1;
+      }
+    });
+  }
+
+  checkCollisions(car) {
+    let coinsCollected = 0;
+    let fuelCollected = 0;
+    
+    // Check coin collisions
+    this.coins.forEach(coin => {
+      if (!coin.collected) {
+        const dx = car.x - coin.x;
+        const dy = car.y - coin.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < CONFIG.CAR_WIDTH / 2 + CONFIG.COIN_RADIUS) {
+          coin.collected = true;
+          coinsCollected++;
+        }
+      }
+    });
+    
+    // Check fuel pickup collisions
+    this.fuelPickups.forEach(fuel => {
+      if (!fuel.collected) {
+        const dx = car.x - fuel.x;
+        const dy = car.y - fuel.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < CONFIG.CAR_WIDTH / 2 + 20) {
+          fuel.collected = true;
+          fuelCollected++;
+        }
+      }
+    });
+    
+    return { coinsCollected, fuelCollected };
+  }
+
+  render(ctx, camera) {
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+    
+    // Render coins
+    this.coins.forEach(coin => {
+      if (!coin.collected) {
+        ctx.save();
+        ctx.translate(coin.x, coin.y);
+        ctx.rotate(coin.rotation);
+        
+        // Coin glow
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#FFD700';
+        
+        // Coin body
+        ctx.fillStyle = '#FFD700';
+        ctx.strokeStyle = '#FFA500';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, CONFIG.COIN_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Coin detail
+        ctx.fillStyle = '#FFA500';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('$', 0, 0);
+        
+        ctx.restore();
+      }
+    });
+    
+    // Render fuel pickups
+    this.fuelPickups.forEach(fuel => {
+      if (!fuel.collected) {
+        ctx.save();
+        ctx.translate(fuel.x, fuel.y);
+        
+        const scale = 1 + Math.sin(fuel.pulse) * 0.1;
+        ctx.scale(scale, scale);
+        
+        // Fuel can glow
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#00ff88';
+        
+        // Fuel can
+        ctx.fillStyle = '#ff4444';
+        ctx.strokeStyle = '#cc0000';
+        ctx.lineWidth = 3;
+        ctx.fillRect(-15, -20, 30, 40);
+        ctx.strokeRect(-15, -20, 30, 40);
+        
+        // Fuel nozzle
+        ctx.fillStyle = '#333';
+        ctx.fillRect(-5, -25, 10, 8);
+        
+        // Label
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⛽', 0, 0);
+        
+        ctx.restore();
+      }
+    });
+    
+    ctx.restore();
+  }
+}
+
+// ============================================
+// CAR CLASS
+// ============================================
+class Car {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.vx = 0;
+    this.vy = 0;
+    this.angle = 0;
+    this.angularVel = 0;
+    this.wheelAngle = 0;
+    this.leftSuspension = 0;
+    this.rightSuspension = 0;
+    this.fuel = CONFIG.MAX_FUEL;
+    this.tiltOffset = 0;
+  }
+
+  update(terrain, keys, particleSystem) {
+    const accelerating = keys['ArrowUp'] || keys['w'] || keys['W'];
+    const braking = keys['ArrowDown'] || keys['s'] || keys['S'];
+    
+    // Apply controls
+    if (accelerating && this.fuel > 0) {
+      this.vx += CONFIG.ACCELERATION;
+      this.fuel -= CONFIG.FUEL_CONSUMPTION;
+      this.tiltOffset = Math.min(this.tiltOffset + 0.02, 0.15);
+      
+      // Emit exhaust particles occasionally
+      if (Math.random() < 0.3) {
+        particleSystem.emit(this.x - CONFIG.CAR_WIDTH / 2, this.y, 2, 'dust');
+      }
+    } else {
+      this.tiltOffset = Math.max(this.tiltOffset - 0.02, 0);
+    }
+    
+    if (braking) {
+      this.vx -= CONFIG.BRAKE_FORCE;
+      this.tiltOffset = Math.max(this.tiltOffset - 0.02, -0.15);
+    }
+    
+    this.fuel = Math.max(0, this.fuel);
+    
+    // Speed limits
+    this.vx = Math.max(-CONFIG.MAX_SPEED, Math.min(CONFIG.MAX_SPEED, this.vx));
+    this.vx *= 0.985;
+    
+    // Gravity
+    this.vy += CONFIG.GRAVITY;
+    
+    // Update position
+    this.x += this.vx;
+    this.y += this.vy;
+    
+    // Wheel positions
+    const cos = Math.cos(this.angle);
+    const sin = Math.sin(this.angle);
+    
+    const wheelLeftX = this.x + cos * (-CONFIG.CAR_WIDTH / 2) - sin * (CONFIG.CAR_HEIGHT / 2);
+    const wheelLeftY = this.y + sin * (-CONFIG.CAR_WIDTH / 2) + cos * (CONFIG.CAR_HEIGHT / 2);
+    const wheelRightX = this.x + cos * (CONFIG.CAR_WIDTH / 2) - sin * (CONFIG.CAR_HEIGHT / 2);
+    const wheelRightY = this.y + sin * (CONFIG.CAR_WIDTH / 2) + cos * (CONFIG.CAR_HEIGHT / 2);
+    
+    const groundLeftY = terrain.getY(wheelLeftX);
+    const groundRightY = terrain.getY(wheelRightX);
+    
+    const leftContact = wheelLeftY + CONFIG.WHEEL_RADIUS > groundLeftY;
+    const rightContact = wheelRightY + CONFIG.WHEEL_RADIUS > groundRightY;
+    
+    const wasOnGround = this.onGround;
+    this.onGround = leftContact || rightContact;
+    
+    // Landing effects
+    if (!wasOnGround && this.onGround && this.vy > 5) {
+      particleSystem.emit(this.x, this.y + CONFIG.CAR_HEIGHT / 2, 12, 'dust');
+      particleSystem.emit(this.x, this.y + CONFIG.CAR_HEIGHT / 2, 6, 'spark');
+    }
+    
+    // Suspension physics
+    this.leftSuspension *= 0.85;
+    this.rightSuspension *= 0.85;
+    
+    if (leftContact) {
+      const penetration = (wheelLeftY + CONFIG.WHEEL_RADIUS) - groundLeftY;
+      this.leftSuspension = penetration;
+      const force = penetration * CONFIG.SUSPENSION_STRENGTH;
+      this.vy -= force;
+      this.vy *= CONFIG.SUSPENSION_DAMPING;
+      this.angularVel += force * 0.02;
+      
+      // Dust particles
+      if (Math.abs(this.vx) > 2 && Math.random() < 0.2) {
+        particleSystem.emit(wheelLeftX, groundLeftY, 2, 'dust');
+      }
+    }
+    
+    if (rightContact) {
+      const penetration = (wheelRightY + CONFIG.WHEEL_RADIUS) - groundRightY;
+      this.rightSuspension = penetration;
+      const force = penetration * CONFIG.SUSPENSION_STRENGTH;
+      this.vy -= force;
+      this.vy *= CONFIG.SUSPENSION_DAMPING;
+      this.angularVel -= force * 0.02;
+      
+      // Dust particles
+      if (Math.abs(this.vx) > 2 && Math.random() < 0.2) {
+        particleSystem.emit(wheelRightX, groundRightY, 2, 'dust');
+      }
+    }
+    
+    // Terrain angle matching
+    if (this.onGround) {
+      const targetAngle = terrain.getAngle(this.x);
+      this.angle += (targetAngle - this.angle) * 0.15;
+    }
+    
+    this.angle += this.angularVel;
+    this.angularVel *= 0.92;
+    
+    // Wheel rotation
+    this.wheelAngle += this.vx * 0.15;
+  }
+
+  getSpeed() {
+    return Math.abs(this.vx);
+  }
+
+  render(ctx, camera, terrain) {
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+    
+    // Shadow
+    const shadowY = terrain.getY(this.x);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(this.x, shadowY, CONFIG.CAR_WIDTH * 0.7, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Car body
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle + this.tiltOffset);
+    
+    // Body gradient
+    const bodyGradient = ctx.createLinearGradient(0, -CONFIG.CAR_HEIGHT / 2, 0, CONFIG.CAR_HEIGHT / 2);
+    bodyGradient.addColorStop(0, '#ff5555');
+    bodyGradient.addColorStop(1, '#cc0000');
+    ctx.fillStyle = bodyGradient;
+    ctx.strokeStyle = '#990000';
+    ctx.lineWidth = 4;
+    
+    ctx.beginPath();
+    ctx.roundRect(-CONFIG.CAR_WIDTH / 2, -CONFIG.CAR_HEIGHT / 2, CONFIG.CAR_WIDTH, CONFIG.CAR_HEIGHT, 10);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Window
+    ctx.fillStyle = '#4dd0e1';
+    ctx.strokeStyle = '#0097a7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(-28, -CONFIG.CAR_HEIGHT / 2 + 10, 56, 22, 5);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Window reflection
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.fillRect(-18, -CONFIG.CAR_HEIGHT / 2 + 12, 12, 10);
+    
+    ctx.restore();
+    
+    // Wheels
+    this.renderWheel(ctx, this.x, this.y, this.angle, -CONFIG.CAR_WIDTH / 2, this.leftSuspension);
+    this.renderWheel(ctx, this.x, this.y, this.angle, CONFIG.CAR_WIDTH / 2, this.rightSuspension);
+    
+    ctx.restore();
+  }
+
+  renderWheel(ctx, carX, carY, carAngle, offset, suspension) {
+    const cos = Math.cos(carAngle);
+    const sin = Math.sin(carAngle);
+    
+    const wheelX = carX + cos * offset - sin * (CONFIG.CAR_HEIGHT / 2);
+    const wheelY = carY + sin * offset + cos * (CONFIG.CAR_HEIGHT / 2) + suspension * 0.5;
+    
+    ctx.save();
+    ctx.translate(wheelX, wheelY);
+    ctx.rotate(this.wheelAngle);
+    
+    // Wheel gradient
+    const wheelGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, CONFIG.WHEEL_RADIUS);
     wheelGradient.addColorStop(0, '#444');
     wheelGradient.addColorStop(0.7, '#222');
     wheelGradient.addColorStop(1, '#000');
     ctx.fillStyle = wheelGradient;
     ctx.beginPath();
-    ctx.arc(0, 0, WHEEL_RADIUS, 0, Math.PI * 2);
+    ctx.arc(0, 0, CONFIG.WHEEL_RADIUS, 0, Math.PI * 2);
     ctx.fill();
     
+    // Wheel rim
     ctx.strokeStyle = '#666';
     ctx.lineWidth = 4;
     ctx.stroke();
     
+    // Spokes
     ctx.strokeStyle = '#888';
     ctx.lineWidth = 3;
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2;
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(angle) * (WHEEL_RADIUS - 4), Math.sin(angle) * (WHEEL_RADIUS - 4));
+      ctx.lineTo(Math.cos(angle) * (CONFIG.WHEEL_RADIUS - 5), Math.sin(angle) * (CONFIG.WHEEL_RADIUS - 5));
       ctx.stroke();
     }
     
+    // Hub
     ctx.fillStyle = '#555';
     ctx.beginPath();
-    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+    ctx.arc(0, 0, 7, 0, Math.PI * 2);
     ctx.fill();
     
     ctx.restore();
   }
-  
-  const cos = Math.cos(car.angle);
-  const sin = Math.sin(car.angle);
-  
-  const wheelLeftX = car.x + cos * (-CAR_WIDTH / 2) - sin * (CAR_HEIGHT / 2);
-  const wheelLeftY = car.y + sin * (-CAR_WIDTH / 2) + cos * (CAR_HEIGHT / 2);
-  const wheelRightX = car.x + cos * (CAR_WIDTH / 2) - sin * (CAR_HEIGHT / 2);
-  const wheelRightY = car.y + sin * (CAR_WIDTH / 2) + cos * (CAR_HEIGHT / 2);
-  
-  drawWheel(wheelLeftX, wheelLeftY, car.leftSuspension);
-  drawWheel(wheelRightX, wheelRightY, car.rightSuspension);
-  
-  ctx.restore();
 }
 
-function gameLoop() {
-  update();
-  render();
-  requestAnimationFrame(gameLoop);
+// ============================================
+// GAME CLASS
+// ============================================
+class Game {
+  constructor() {
+    this.canvas = document.getElementById('canvas');
+    this.ctx = this.canvas.getContext('2d');
+    
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    
+    this.keys = {};
+    this.setupControls();
+    
+    this.init();
+    this.animate();
+  }
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  setupControls() {
+    window.addEventListener('keydown', e => {
+      this.keys[e.key] = true;
+      if (e.key === 'r' || e.key === 'R') {
+        this.init();
+      }
+    });
+    
+    window.addEventListener('keyup', e => {
+      this.keys[e.key] = false;
+    });
+    
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      this.init();
+    });
+  }
+
+  init() {
+    this.terrain = new Terrain();
+    this.car = new Car(300, 200);
+    this.collectibles = new Collectibles(this.terrain);
+    this.particleSystem = new ParticleSystem();
+    this.cloudSystem = new CloudSystem(this.canvas.width, this.canvas.height);
+    
+    this.camera = { x: 0, y: 0 };
+    this.distance = 0;
+    this.coins = 0;
+    this.bestDistance = parseInt(localStorage.getItem('hillClimbBest') || '0');
+    this.gameOver = false;
+    this.lastMilestone = 0;
+    
+    this.updateUI();
+    document.getElementById('gameOver').classList.remove('show');
+  }
+
+  update() {
+    if (this.gameOver) return;
+    
+    // Update systems
+    this.car.update(this.terrain, this.keys, this.particleSystem);
+    this.particleSystem.update();
+    this.cloudSystem.update(this.camera, this.canvas.width);
+    this.collectibles.update();
+    
+    // Check collisions
+    const { coinsCollected, fuelCollected } = this.collectibles.checkCollisions(this.car);
+    
+    if (coinsCollected > 0) {
+      this.coins += coinsCollected;
+      this.car.fuel = Math.min(CONFIG.MAX_FUEL, this.car.fuel + coinsCollected * 2);
+    }
+    
+    if (fuelCollected > 0) {
+      this.car.fuel = Math.min(CONFIG.MAX_FUEL, this.car.fuel + CONFIG.FUEL_PICKUP_VALUE);
+    }
+    
+    // Update camera
+    this.camera.x += (this.car.x - this.canvas.width * 0.35 - this.camera.x) * 0.08;
+    this.camera.y += (this.car.y - this.canvas.height * 0.55 - this.camera.y) * 0.08;
+    
+    // Update distance
+    this.distance = Math.max(this.distance, Math.floor(this.car.x / 10));
+    
+    // Check milestones
+    const milestone = Math.floor(this.distance / 100) * 100;
+    if (milestone > this.lastMilestone && milestone > 0) {
+      this.showMilestone(milestone);
+      this.lastMilestone = milestone;
+    }
+    
+    // Update best distance
+    if (this.distance > this.bestDistance) {
+      this.bestDistance = this.distance;
+      localStorage.setItem('hillClimbBest', this.bestDistance);
+    }
+    
+    // Game over check
+    if (this.car.fuel <= 0 && Math.abs(this.car.vx) < 0.1) {
+      this.endGame();
+    }
+    
+    // Fall off check
+    if (this.car.y > this.canvas.height + 500) {
+      this.endGame();
+    }
+    
+    this.updateUI();
+  }
+
+  showMilestone(distance) {
+    const milestone = document.createElement('div');
+    milestone.className = 'milestone';
+    milestone.textContent = distance === this.bestDistance ? `🎉 New Record: ${distance}m!` : `${distance}m Milestone!`;
+    document.getElementById('ui').appendChild(milestone);
+    
+    setTimeout(() => {
+      milestone.remove();
+    }, 2000);
+  }
+
+  updateUI() {
+    document.getElementById('distance').textContent = this.distance;
+    document.getElementById('coins').textContent = this.coins;
+    document.getElementById('best').textContent = this.bestDistance;
+    
+    const fuelPercent = (this.car.fuel / CONFIG.MAX_FUEL) * 100;
+    const fuelFill = document.getElementById('fuelFill');
+    fuelFill.style.width = fuelPercent + '%';
+    
+    if (fuelPercent < 20) {
+      fuelFill.classList.add('low');
+    } else {
+      fuelFill.classList.remove('low');
+    }
+    
+    const speed = Math.round(this.car.getSpeed() * 10);
+    document.getElementById('speedValue').textContent = speed;
+  }
+
+  endGame() {
+    this.gameOver = true;
+    document.getElementById('finalDistance').textContent = this.distance;
+    document.getElementById('finalCoins').textContent = this.coins;
+    document.getElementById('gameOver').classList.add('show');
+  }
+
+  render() {
+    // Sky gradient
+    const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+    gradient.addColorStop(0, '#1e3a5f');
+    gradient.addColorStop(0.5, '#5a7ba6');
+    gradient.addColorStop(1, '#87CEEB');
+    this.ctx.fillStyle = gradient;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Render game objects
+    this.cloudSystem.render(this.ctx, this.camera);
+    this.terrain.render(this.ctx, this.camera, this.canvas.height);
+    this.collectibles.render(this.ctx, this.camera);
+    this.particleSystem.render(this.ctx, this.camera);
+    this.car.render(this.ctx, this.camera, this.terrain);
+  }
+
+  animate() {
+    this.update();
+    this.render();
+    requestAnimationFrame(() => this.animate());
+  }
 }
 
-window.addEventListener('keydown', e => {
-  keys[e.key] = true;
-  if (e.key === ' ') e.preventDefault();
+// ============================================
+// START GAME
+// ============================================
+window.addEventListener('load', () => {
+  new Game();
 });
-
-window.addEventListener('keyup', e => {
-  keys[e.key] = false;
-});
-
-restartBtn.addEventListener('click', resetGame);
-playAgainBtn.addEventListener('click', resetGame);
-
-generateTerrain();
-generateClouds();
-gameLoop();
 </script>
+
 </body>
 </html>
