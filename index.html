@@ -1,1728 +1,1097 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>F1 Hill Climb Racing</title>
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-body {
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-  background: #000;
-  touch-action: none;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-}
-
-canvas {
-  display: none;
-  touch-action: none;
-}
-
-canvas.show {
-  display: block;
-}
-
-#lobby {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-#lobby.hide {
-  display: none;
-}
-
-.lobby-title {
-  font-size: 48px;
-  color: #00d4ff;
-  font-weight: bold;
-  margin-bottom: 20px;
-  text-shadow: 0 0 20px #00d4ff;
-}
-
-.lobby-tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.tab-btn {
-  padding: 12px 24px;
-  background: rgba(255,255,255,0.1);
-  border: 2px solid rgba(255,255,255,0.3);
-  color: white;
-  font-size: 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.tab-btn.active {
-  background: #00d4ff;
-  border-color: #00d4ff;
-  color: #000;
-}
-
-.lobby-content {
-  width: 90%;
-  max-width: 800px;
-  height: 400px;
-  background: rgba(0,0,0,0.5);
-  border-radius: 12px;
-  padding: 20px;
-  overflow-y: auto;
-  margin-bottom: 20px;
-}
-
-.tab-panel {
-  display: none;
-}
-
-.tab-panel.active {
-  display: block;
-}
-
-.car-grid, .map-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 15px;
-}
-
-.car-card, .map-card {
-  background: rgba(255,255,255,0.1);
-  border: 2px solid rgba(255,255,255,0.3);
-  border-radius: 8px;
-  padding: 15px;
-  cursor: pointer;
-  transition: all 0.3s;
-  color: white;
-}
-
-.car-card.selected, .map-card.selected {
-  border-color: #00d4ff;
-  background: rgba(0,212,255,0.2);
-}
-
-.car-card.locked {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.car-name, .map-name {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.car-stats, .map-stats {
-  font-size: 12px;
-  color: #aaa;
-}
-
-.stat-bar {
-  height: 4px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 2px;
-  margin: 4px 0;
-  overflow: hidden;
-}
-
-.stat-fill {
-  height: 100%;
-  background: #00d4ff;
-}
-
-.play-btn {
-  padding: 15px 60px;
-  background: linear-gradient(135deg, #00d4ff, #0099cc);
-  border: none;
-  color: white;
-  font-size: 24px;
-  font-weight: bold;
-  border-radius: 12px;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(0,212,255,0.4);
-}
-
-.play-btn:hover {
-  transform: scale(1.05);
-}
-
-.upgrade-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.upgrade-item {
-  background: rgba(255,255,255,0.1);
-  padding: 15px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: white;
-}
-
-.upgrade-info {
-  flex: 1;
-}
-
-.upgrade-name {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.upgrade-level {
-  font-size: 12px;
-  color: #aaa;
-}
-
-.upgrade-btn {
-  padding: 8px 20px;
-  background: #00d4ff;
-  border: none;
-  color: #000;
-  font-weight: bold;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.upgrade-btn:disabled {
-  background: #555;
-  color: #888;
-  cursor: not-allowed;
-}
-
-#ui {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 10;
-  display: none;
-}
-
-#ui.show {
-  display: block;
-}
-
-.hud {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(0,0,0,0.8);
-  padding: 10px 15px;
-  border-radius: 8px;
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.hud-item {
-  margin: 5px 0;
-}
-
-.fuel-container {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 150px;
-}
-
-.fuel-bar, .nitro-bar, .jump-bar {
-  width: 100%;
-  height: 20px;
-  background: rgba(0,0,0,0.8);
-  border: 2px solid white;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 5px;
-}
-
-.fuel-fill {
-  height: 100%;
-  background: linear-gradient(to right, #f44, #fa0, #4f4);
-  transition: width 0.3s;
-}
-
-.nitro-fill {
-  height: 100%;
-  background: linear-gradient(to right, #f0f, #f4f);
-  transition: width 0.3s;
-}
-
-.jump-fill {
-  height: 100%;
-  background: linear-gradient(to right, #0af, #0ff);
-  transition: width 0.3s;
-}
-
-.fuel-fill.low {
-  animation: flash 0.5s infinite;
-}
-
-@keyframes flash {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.speedometer {
-  position: absolute;
-  bottom: 150px;
-  right: 20px;
-  width: 80px;
-  height: 80px;
-  background: rgba(0,0,0,0.8);
-  border-radius: 50%;
-  border: 3px solid #fd0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #0f8;
-  font-weight: bold;
-}
-
-.speed-value {
-  font-size: 24px;
-}
-
-.speed-unit {
-  font-size: 10px;
-  color: #aaa;
-}
-
-.touch-controls {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 150px;
-  display: flex;
-  justify-content: space-between;
-  padding: 20px;
-  pointer-events: auto;
-}
-
-.touch-left, .touch-right {
-  display: flex;
-  gap: 10px;
-}
-
-.touch-btn {
-  width: 80px;
-  height: 80px;
-  background: rgba(0,0,0,0.6);
-  border: 3px solid rgba(255,255,255,0.8);
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  user-select: none;
-  font-size: 12px;
-}
-
-.touch-btn.active {
-  background: rgba(76,175,80,0.8);
-  transform: scale(0.95);
-}
-
-.touch-btn-icon {
-  font-size: 24px;
-}
-
-.control-btn {
-  position: absolute;
-  top: 10px;
-  padding: 8px 15px;
-  background: rgba(0,0,0,0.7);
-  border: 2px solid white;
-  border-radius: 8px;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-#pauseBtn {
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-#fullscreenBtn {
-  right: 170px;
-}
-
-.game-over {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0,0,0,0.95);
-  padding: 30px 50px;
-  border-radius: 15px;
-  text-align: center;
-  color: white;
-  display: none;
-  pointer-events: auto;
-}
-
-.game-over.show {
-  display: block;
-}
-
-.game-over h1 {
-  font-size: 36px;
-  margin-bottom: 15px;
-  color: #f44;
-}
-
-.game-over p {
-  font-size: 20px;
-  margin: 8px 0;
-  color: #fd0;
-}
-
-.game-over button {
-  margin-top: 20px;
-  padding: 12px 30px;
-  font-size: 18px;
-  background: linear-gradient(135deg, #4CAF50, #388E3C);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.pause-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.8);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  pointer-events: auto;
-  z-index: 50;
-}
-
-.pause-overlay.show {
-  display: flex;
-}
-
-.pause-content {
-  background: rgba(30,30,30,0.95);
-  padding: 30px 50px;
-  border-radius: 15px;
-  text-align: center;
-  color: white;
-}
-
-.pause-content h1 {
-  font-size: 36px;
-  margin-bottom: 20px;
-}
-
-.pause-btn {
-  margin: 8px;
-  padding: 12px 30px;
-  font-size: 18px;
-  background: linear-gradient(135deg, #4CAF50, #388E3C);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-#error-display {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  padding: 10px;
-  background: rgba(255,68,68,0.9);
-  color: white;
-  font-family: monospace;
-  font-size: 12px;
-  display: none;
-  z-index: 1000;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-#error-display.show {
-  display: block;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>F1 Hill Climb Racing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+            touch-action: none;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            background: #87CEEB;
+        }
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+        }
+        .screen.active {
+            display: flex;
+        }
+        .menu {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+        .menu h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+        }
+        .menu h2 {
+            font-size: 32px;
+            margin: 20px 0;
+        }
+        .coins-display {
+            font-size: 28px;
+            margin: 15px 0;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            margin: 10px;
+            font-size: 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+        .map-grid, .car-grid, .upgrade-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .map-card, .car-card, .upgrade-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .map-card:hover, .car-card:hover, .upgrade-card:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-5px);
+        }
+        .map-card.selected, .car-card.selected {
+            border: 2px solid #ffd700;
+            background: rgba(255,215,0,0.2);
+        }
+        .locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .locked:hover {
+            transform: none;
+        }
+        /* Game UI */
+        .game-ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            z-index: 50;
+        }
+        .game-ui div {
+            margin: 5px 0;
+        }
+        /* Mobile Controls */
+        .controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 35%;
+            pointer-events: none;
+            z-index: 60;
+        }
+        .control-btn {
+            position: absolute;
+            background: rgba(255,255,255,0.3);
+            border: 3px solid rgba(255,255,255,0.6);
+            border-radius: 15px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            user-select: none;
+            transition: all 0.1s;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        .control-btn.active {
+            background: rgba(255,255,255,0.6);
+            transform: scale(0.95);
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.3);
+        }
+        /* Right side: GAS (big) and NITRO (smaller, above) */
+        #gasBtn {
+            bottom: 3%;
+            right: 3%;
+            width: 28%;
+            height: 60%;
+            background: rgba(0,255,0,0.4);
+            border-color: rgba(0,255,0,0.8);
+        }
+        #gasBtn.active {
+            background: rgba(0,255,0,0.7);
+        }
+        #nitroBtn {
+            bottom: 65%;
+            right: 3%;
+            width: 18%;
+            height: 25%;
+            background: rgba(255,165,0,0.4);
+            border-color: rgba(255,165,0,0.8);
+            font-size: 18px;
+        }
+        #nitroBtn.active {
+            background: rgba(255,165,0,0.7);
+        }
+        /* Left side: BRAKE (big), JUMP (above brake), UP/DOWN (smaller) */
+        #brakeBtn {
+            bottom: 3%;
+            left: 3%;
+            width: 28%;
+            height: 60%;
+            background: rgba(255,0,0,0.4);
+            border-color: rgba(255,0,0,0.8);
+        }
+        #brakeBtn.active {
+            background: rgba(255,0,0,0.7);
+        }
+        #jumpBtn {
+            bottom: 65%;
+            left: 3%;
+            width: 20%;
+            height: 25%;
+            background: rgba(255,255,0,0.4);
+            border-color: rgba(255,255,0,0.8);
+            font-size: 18px;
+        }
+        #jumpBtn.active {
+            background: rgba(255,255,0,0.7);
+        }
+        #tiltUpBtn {
+            bottom: 65%;
+            left: 25%;
+            width: 15%;
+            height: 25%;
+            background: rgba(0,200,255,0.4);
+            border-color: rgba(0,200,255,0.8);
+            font-size: 20px;
+        }
+        #tiltUpBtn.active {
+            background: rgba(0,200,255,0.7);
+        }
+        #tiltDownBtn {
+            bottom: 38%;
+            left: 25%;
+            width: 15%;
+            height: 25%;
+            background: rgba(0,200,255,0.4);
+            border-color: rgba(0,200,255,0.8);
+            font-size: 20px;
+        }
+        #tiltDownBtn.active {
+            background: rgba(0,200,255,0.7);
+        }
+        .pause-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.3);
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            z-index: 70;
+        }
+    </style>
 </head>
 <body>
-
-<div id="lobby">
-  <h1 class="lobby-title">🏎️ F1 HILL CLIMB RACING</h1>
-  
-  <div class="lobby-tabs">
-    <button class="tab-btn active" data-tab="cars">Cars</button>
-    <button class="tab-btn" data-tab="maps">Maps</button>
-    <button class="tab-btn" data-tab="garage">Garage</button>
-  </div>
-  
-  <div class="lobby-content">
-    <div id="cars-tab" class="tab-panel active">
-      <div class="car-grid" id="carGrid"></div>
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Game UI -->
+    <div class="game-ui">
+        <div>Distance: <span id="distanceText">0</span>m</div>
+        <div>Coins: <span id="coinsText">0</span></div>
+        <div>Fuel: <span id="fuelText">100</span>%</div>
     </div>
-    
-    <div id="maps-tab" class="tab-panel">
-      <div class="map-grid" id="mapGrid"></div>
+    <button class="pause-btn" onclick="pauseGame()">⏸ Pause</button>
+
+    <!-- Mobile Controls -->
+    <div class="controls">
+        <div class="control-btn" id="gasBtn">GAS</div>
+        <div class="control-btn" id="brakeBtn">BRAKE</div>
+        <div class="control-btn" id="jumpBtn">JUMP</div>
+        <div class="control-btn" id="nitroBtn">NITRO</div>
+        <div class="control-btn" id="tiltUpBtn">↑</div>
+        <div class="control-btn" id="tiltDownBtn">↓</div>
     </div>
-    
-    <div id="garage-tab" class="tab-panel">
-      <div class="upgrade-list" id="upgradeList"></div>
+
+    <!-- Main Menu -->
+    <div class="screen active" id="mainMenu">
+        <div class="menu">
+            <h1>🏎️ F1 Hill Climb Racing</h1>
+            <div class="coins-display">💰 Coins: <span id="menuCoins">0</span></div>
+            <button class="btn" onclick="showScreen('mapSelect')">Play</button>
+            <button class="btn" onclick="showScreen('garage')">Garage</button>
+            <button class="btn" onclick="showScreen('upgrades')">Upgrades</button>
+        </div>
     </div>
-  </div>
-  
-  <button class="play-btn" id="playBtn">▶️ PLAY</button>
-</div>
 
-<canvas id="canvas"></canvas>
-
-<div id="ui">
-  <button class="control-btn" id="pauseBtn">⏸️</button>
-  <button class="control-btn" id="fullscreenBtn">⛶</button>
-  
-  <div class="hud">
-    <div class="hud-item">📏 <span id="distance">0</span>m</div>
-    <div class="hud-item">💰 <span id="coins">0</span></div>
-    <div class="hud-item">🏆 <span id="best">0</span>m</div>
-  </div>
-
-  <div class="fuel-container">
-    <div class="fuel-bar"><div class="fuel-fill" id="fuelFill"></div></div>
-    <div class="nitro-bar"><div class="nitro-fill" id="nitroFill"></div></div>
-    <div class="jump-bar"><div class="jump-fill" id="jumpFill"></div></div>
-  </div>
-
-  <div class="speedometer">
-    <div class="speed-value" id="speedValue">0</div>
-    <div class="speed-unit">km/h</div>
-  </div>
-
-  <div class="touch-controls">
-    <div class="touch-left">
-      <div class="touch-btn" id="brakeBtn">
-        <div class="touch-btn-icon">⬇️</div>
-        <div>BRAKE</div>
-      </div>
-      <div class="touch-btn" id="jumpBtn">
-        <div class="touch-btn-icon">⬆️</div>
-        <div>JUMP</div>
-      </div>
+    <!-- Map Selection -->
+    <div class="screen" id="mapSelect">
+        <div class="menu">
+            <h2>Select Map</h2>
+            <div class="coins-display">💰 Coins: <span id="mapCoins">0</span></div>
+            <div class="map-grid" id="mapGrid"></div>
+            <button class="btn" onclick="startGame()">Start Race</button>
+            <button class="btn" onclick="showScreen('mainMenu')">Back</button>
+        </div>
     </div>
-    <div class="touch-right">
-      <div class="touch-btn" id="nitroBtn">
-        <div class="touch-btn-icon">🔥</div>
-        <div>NITRO</div>
-      </div>
-      <div class="touch-btn" id="accelBtn">
-        <div class="touch-btn-icon">➡️</div>
-        <div>GAS</div>
-      </div>
+
+    <!-- Garage -->
+    <div class="screen" id="garage">
+        <div class="menu">
+            <h2>Garage</h2>
+            <div class="coins-display">💰 Coins: <span id="garageCoins">0</span></div>
+            <div class="car-grid" id="carGrid"></div>
+            <button class="btn" onclick="showScreen('mainMenu')">Back</button>
+        </div>
     </div>
-  </div>
 
-  <div class="pause-overlay" id="pauseOverlay">
-    <div class="pause-content">
-      <h1>⏸️ PAUSED</h1>
-      <button class="pause-btn" id="resumeBtn">▶️ Resume</button>
-      <button class="pause-btn" id="menuBtn">🏠 Menu</button>
+    <!-- Upgrades -->
+    <div class="screen" id="upgrades">
+        <div class="menu">
+            <h2>Upgrades</h2>
+            <div class="coins-display">💰 Coins: <span id="upgradeCoins">0</span></div>
+            <div class="upgrade-grid" id="upgradeGrid"></div>
+            <button class="btn" onclick="showScreen('mainMenu')">Back</button>
+        </div>
     </div>
-  </div>
 
-  <div class="game-over" id="gameOver">
-    <h1 id="gameOverTitle">Game Over!</h1>
-    <p>Distance: <span id="finalDistance">0</span>m</p>
-    <p>Coins: <span id="finalCoins">0</span></p>
-    <button id="restartBtn">🔄 Play Again</button>
-    <button id="menuBtnGameOver">🏠 Menu</button>
-  </div>
-</div>
+    <!-- Game Over -->
+    <div class="screen" id="gameOver">
+        <div class="menu">
+            <h2>Race Finished!</h2>
+            <div style="font-size: 24px; margin: 20px 0;">
+                <div>Distance: <span id="finalDistance">0</span>m</div>
+                <div>Coins Earned: <span id="coinsEarned">0</span></div>
+                <div>Total Coins: <span id="totalCoins">0</span></div>
+            </div>
+            <button class="btn" onclick="restartGame()">Race Again</button>
+            <button class="btn" onclick="showScreen('mainMenu')">Main Menu</button>
+        </div>
+    </div>
 
-<div id="error-display"></div>
+    <!-- Pause Menu -->
+    <div class="screen" id="pauseMenu">
+        <div class="menu">
+            <h2>Paused</h2>
+            <button class="btn" onclick="resumeGame()">Resume</button>
+            <button class="btn" onclick="quitToMenu()">Quit to Menu</button>
+        </div>
+    </div>
 
-<script>
-(function() {
-'use strict';
-
-if (!CanvasRenderingContext2D.prototype.roundRect) {
-  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-    if (w < 2 * r) r = w / 2;
-    if (h < 2 * r) r = h / 2;
-    this.beginPath();
-    this.moveTo(x + r, y);
-    this.arcTo(x + w, y, x + w, y + h, r);
-    this.arcTo(x + w, y + h, x, y + h, r);
-    this.arcTo(x, y + h, x, y, r);
-    this.arcTo(x, y, x + w, y, r);
-    this.closePath();
-    return this;
-  };
-}
-
-window.onerror = function(msg, url, line, col, error) {
-  const errorDisplay = document.getElementById('error-display');
-  errorDisplay.textContent = 'Error: ' + msg + '\nLine: ' + line + '\n' + (error ? error.stack : '');
-  errorDisplay.classList.add('show');
-  return true;
-};
-
-const CARS = [
-  {id: 'basic', name: '🏎️ Basic F1', cost: 0, speed: 14, accel: 0.5, grip: 0.8, suspension: 0.6, fuelEff: 1.0, weight: 1.0},
-  {id: 'racer', name: '🏁 Speed Racer', cost: 500, speed: 18, accel: 0.7, grip: 0.7, suspension: 0.5, fuelEff: 0.8, weight: 0.9},
-  {id: 'monster', name: '🚙 Monster', cost: 1000, speed: 12, accel: 0.4, grip: 1.0, suspension: 0.9, fuelEff: 1.2, weight: 1.3},
-  {id: 'elite', name: '👑 Elite F1', cost: 2000, speed: 20, accel: 0.8, grip: 0.9, suspension: 0.7, fuelEff: 0.9, weight: 0.8}
-];
-
-const MAPS = [
-  {id: 'hills', name: '🌄 Easy Hills', gravity: 0.8, roughness: 1.0, friction: 0.98, bgColors: ['#1e3a5f', '#5a7ba6', '#87CEEB']},
-  {id: 'desert', name: '🏜️ Desert Dunes', gravity: 0.8, roughness: 1.5, friction: 0.95, bgColors: ['#3a2a1e', '#8b6f47', '#f4a460']},
-  {id: 'ice', name: '❄️ Ice Slopes', gravity: 0.8, roughness: 0.8, friction: 0.92, bgColors: ['#1e3a5f', '#4a7ba6', '#b0e0e6']},
-  {id: 'moon', name: '🌙 Moon', gravity: 0.3, roughness: 1.2, friction: 0.97, bgColors: ['#0a0a0a', '#1a1a2e', '#2e2e4e']}
-];
-
-const UPGRADES = [
-  {id: 'grip', name: '🔧 Wheels', desc: 'Grip & Stability', maxLevel: 5, baseCost: 100, effect: 'grip'},
-  {id: 'suspension', name: '⚙️ Suspension', desc: 'Reduce Bounce', maxLevel: 5, baseCost: 150, effect: 'suspension'},
-  {id: 'engine', name: '🚀 Engine', desc: 'Top Speed', maxLevel: 5, baseCost: 200, effect: 'speed'},
-  {id: 'fuel', name: '⛽ Fuel Tank', desc: 'Max Fuel', maxLevel: 5, baseCost: 100, effect: 'fuel'},
-  {id: 'nitro', name: '🔥 Nitro', desc: 'Nitro Capacity', maxLevel: 5, baseCost: 150, effect: 'nitro'}
-];
-
-class GameData {
-  constructor() {
-    this.coins = parseInt(localStorage.getItem('f1Coins') || '0');
-    this.selectedCar = localStorage.getItem('f1SelectedCar') || 'basic';
-    this.selectedMap = localStorage.getItem('f1SelectedMap') || 'hills';
-    this.ownedCars = JSON.parse(localStorage.getItem('f1OwnedCars') || '["basic"]');
-    this.upgrades = JSON.parse(localStorage.getItem('f1Upgrades') || '{}');
-    this.bestDistance = parseInt(localStorage.getItem('f1BestDistance') || '0');
-    
-    UPGRADES.forEach(u => {
-      if (!this.upgrades[u.id]) this.upgrades[u.id] = 0;
-    });
-  }
-  
-  save() {
-    localStorage.setItem('f1Coins', this.coins);
-    localStorage.setItem('f1SelectedCar', this.selectedCar);
-    localStorage.setItem('f1SelectedMap', this.selectedMap);
-    localStorage.setItem('f1OwnedCars', JSON.stringify(this.ownedCars));
-    localStorage.setItem('f1Upgrades', JSON.stringify(this.upgrades));
-    localStorage.setItem('f1BestDistance', this.bestDistance);
-  }
-  
-  addCoins(amount) {
-    this.coins += amount;
-    this.save();
-  }
-  
-  buyCar(carId) {
-    const car = CARS.find(c => c.id === carId);
-    if (!car || this.ownedCars.includes(carId)) return false;
-    if (this.coins < car.cost) return false;
-    this.coins -= car.cost;
-    this.ownedCars.push(carId);
-    this.save();
-    return true;
-  }
-  
-  buyUpgrade(upgradeId) {
-    const upgrade = UPGRADES.find(u => u.id === upgradeId);
-    if (!upgrade) return false;
-    const currentLevel = this.upgrades[upgradeId] || 0;
-    if (currentLevel >= upgrade.maxLevel) return false;
-    const cost = upgrade.baseCost * (currentLevel + 1);
-    if (this.coins < cost) return false;
-    this.coins -= cost;
-    this.upgrades[upgradeId] = currentLevel + 1;
-    this.save();
-    return true;
-  }
-  
-  getUpgradeBonus(upgradeId) {
-    const level = this.upgrades[upgradeId] || 0;
-    return level * 0.2;
-  }
-}
-
-class AudioSystem {
-  constructor() {
-    this.context = null;
-    this.enabled = true;
-    this.engineGain = null;
-    this.engineOsc = null;
-    this.init();
-  }
-  init() {
-    try {
-      this.context = new (window.AudioContext || window.webkitAudioContext)();
-      this.engineGain = this.context.createGain();
-      this.engineGain.connect(this.context.destination);
-      this.engineGain.gain.value = 0;
-    } catch (e) {
-      this.enabled = false;
-    }
-  }
-  startEngine() {
-    if (!this.enabled || !this.context) return;
-    this.engineOsc = this.context.createOscillator();
-    this.engineOsc.type = 'sawtooth';
-    this.engineOsc.frequency.value = 80;
-    this.engineOsc.connect(this.engineGain);
-    this.engineOsc.start();
-  }
-  updateEngine(speed, nitro) {
-    if (!this.enabled || !this.engineOsc) return;
-    const freq = 80 + speed * 15 + (nitro ? 30 : 0);
-    const volume = Math.min(speed * 0.03, 0.15);
-    this.engineOsc.frequency.setTargetAtTime(freq, this.context.currentTime, 0.05);
-    this.engineGain.gain.setTargetAtTime(volume, this.context.currentTime, 0.1);
-  }
-  stopEngine() {
-    if (!this.enabled || !this.engineOsc) return;
-    this.engineGain.gain.setTargetAtTime(0, this.context.currentTime, 0.3);
-    setTimeout(() => {
-      if (this.engineOsc) {
-        this.engineOsc.stop();
-        this.engineOsc = null;
-      }
-    }, 500);
-  }
-  playSound(type) {
-    if (!this.enabled || !this.context) return;
-    const osc = this.context.createOscillator();
-    const gain = this.context.createGain();
-    osc.connect(gain);
-    gain.connect(this.context.destination);
-    
-    if (type === 'coin') {
-      osc.frequency.value = 800;
-      osc.type = 'sine';
-      gain.gain.value = 0.2;
-      osc.start();
-      osc.frequency.exponentialRampToValueAtTime(1200, this.context.currentTime + 0.1);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.15);
-      osc.stop(this.context.currentTime + 0.15);
-    } else if (type === 'fuel') {
-      osc.frequency.value = 300;
-      osc.type = 'square';
-      gain.gain.value = 0.15;
-      osc.start();
-      osc.frequency.exponentialRampToValueAtTime(600, this.context.currentTime + 0.2);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.25);
-      osc.stop(this.context.currentTime + 0.25);
-    } else if (type === 'nitro') {
-      osc.frequency.value = 200;
-      osc.type = 'sawtooth';
-      gain.gain.value = 0.1;
-      osc.start();
-      osc.frequency.exponentialRampToValueAtTime(400, this.context.currentTime + 0.15);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.2);
-      osc.stop(this.context.currentTime + 0.2);
-    } else if (type === 'crash') {
-      osc.frequency.value = 100;
-      osc.type = 'sawtooth';
-      gain.gain.value = 0.2;
-      osc.start();
-      osc.frequency.exponentialRampToValueAtTime(30, this.context.currentTime + 0.3);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.4);
-      osc.stop(this.context.currentTime + 0.4);
-    }
-  }
-}
-
-class Random {
-  constructor(seed) {
-    this.seed = seed;
-  }
-  next() {
-    this.seed = (this.seed * 9301 + 49297) % 233280;
-    return this.seed / 233280;
-  }
-}
-
-class ParticleSystem {
-  constructor() {
-    this.particles = [];
-  }
-  emit(x, y, count, type) {
-    type = type || 'dust';
-    for (let i = 0; i < count; i++) {
-      this.particles.push({
-        x: x + (Math.random() - 0.5) * 10,
-        y: y + (Math.random() - 0.5) * 10,
-        vx: (Math.random() - 0.5) * (type === 'spark' ? 8 : 4),
-        vy: -Math.random() * (type === 'spark' ? 6 : 3),
-        life: 1,
-        size: type === 'spark' ? 3 + Math.random() * 2 : 2 + Math.random() * 4,
-        type: type
-      });
-    }
-  }
-  update() {
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.4;
-      p.life -= 0.02;
-      if (p.life <= 0) this.particles.splice(i, 1);
-    }
-  }
-  render(ctx, camera) {
-    ctx.save();
-    ctx.translate(-camera.x, -camera.y);
-    this.particles.forEach(function(p) {
-      const alpha = p.life;
-      if (p.type === 'spark') {
-        ctx.fillStyle = 'rgba(255, 150, 50, ' + alpha + ')';
-      } else {
-        ctx.fillStyle = 'rgba(139, 115, 85, ' + (alpha * 0.8) + ')';
-      }
-      ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-    });
-    ctx.restore();
-  }
-}
-
-class InfiniteTerrain {
-  constructor(mapConfig) {
-    this.chunks = {};
-    this.baseY = 400;
-    this.roughness = mapConfig.roughness;
-  }
-  getChunkIndex(x) {
-    return Math.floor(x / (30 * 35));
-  }
-  generateChunk(chunkIndex) {
-    if (this.chunks[chunkIndex]) return;
-    const points = [];
-    const startX = chunkIndex * 30 * 35;
-    const rng = new Random(12345 + chunkIndex * 1000);
-    for (let i = 0; i < 30; i++) {
-      const globalIndex = chunkIndex * 30 + i;
-      const x = startX + i * 35;
-      const wave1 = Math.sin(globalIndex * 0.025) * 120 * this.roughness;
-      const wave2 = Math.sin(globalIndex * 0.06) * 70 * this.roughness;
-      const wave3 = Math.cos(globalIndex * 0.1) * 45 * this.roughness;
-      const noise = (rng.next() - 0.5) * 30 * this.roughness;
-      const y = this.baseY + wave1 + wave2 + wave3 + noise;
-      points.push({ x: x, y: y });
-    }
-    this.chunks[chunkIndex] = points;
-  }
-  cleanup(cameraX) {
-    const currentChunk = this.getChunkIndex(cameraX);
-    const keys = Object.keys(this.chunks);
-    for (let i = 0; i < keys.length; i++) {
-      const key = parseInt(keys[i]);
-      if (key < currentChunk - 5) {
-        delete this.chunks[key];
-      }
-    }
-  }
-  ensureChunks(cameraX) {
-    const currentChunk = this.getChunkIndex(cameraX);
-    for (let i = currentChunk - 2; i <= currentChunk + 3; i++) {
-      this.generateChunk(i);
-    }
-  }
-  getY(x) {
-    const chunkIndex = this.getChunkIndex(x);
-    const chunk = this.chunks[chunkIndex];
-    if (!chunk) return this.baseY;
-    const localX = x - chunkIndex * 30 * 35;
-    const index = Math.floor(localX / 35);
-    if (index < 0) return chunk[0] ? chunk[0].y : this.baseY;
-    if (index >= chunk.length - 1) return chunk[chunk.length - 1] ? chunk[chunk.length - 1].y : this.baseY;
-    const p1 = chunk[index];
-    const p2 = chunk[index + 1];
-    if (!p1 || !p2) return this.baseY;
-    const t = (localX - index * 35) / 35;
-    return p1.y + (p2.y - p1.y) * t;
-  }
-  getAngle(x) {
-    const chunkIndex = this.getChunkIndex(x);
-    const chunk = this.chunks[chunkIndex];
-    if (!chunk) return 0;
-    const localX = x - chunkIndex * 30 * 35;
-    const index = Math.floor(localX / 35);
-    if (index < 0 || index >= chunk.length - 1) return 0;
-    const p1 = chunk[index];
-    const p2 = chunk[index + 1];
-    if (!p1 || !p2) return 0;
-    return Math.atan2(p2.y - p1.y, p2.x - p1.x);
-  }
-  render(ctx, camera, canvasHeight, bgColors) {
-    ctx.save();
-    ctx.translate(-camera.x, -camera.y);
-    ctx.fillStyle = '#6b8e23';
-    ctx.strokeStyle = '#556b2f';
-    ctx.lineWidth = 5;
-    const keys = Object.keys(this.chunks).sort(function(a, b) { return parseInt(a) - parseInt(b); });
-    ctx.beginPath();
-    let started = false;
-    for (let k = 0; k < keys.length; k++) {
-      const chunk = this.chunks[keys[k]];
-      for (let i = 0; i < chunk.length; i++) {
-        const point = chunk[i];
-        if (!started) {
-          ctx.moveTo(point.x, canvasHeight + camera.y + 1000);
-          ctx.lineTo(point.x, point.y);
-          started = true;
-        } else {
-          ctx.lineTo(point.x, point.y);
-        }
-      }
-    }
-    if (keys.length > 0) {
-      const lastChunk = this.chunks[keys[keys.length - 1]];
-      const lastPoint = lastChunk[lastChunk.length - 1];
-      ctx.lineTo(lastPoint.x, canvasHeight + camera.y + 1000);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-  }
-}
-
-class InfiniteCollectibles {
-  constructor() {
-    this.coins = {};
-    this.fuelPickups = {};
-  }
-  getChunkIndex(x) {
-    return Math.floor(x / (30 * 35));
-  }
-  generateChunk(chunkIndex, terrain) {
-    if (this.coins[chunkIndex] && this.fuelPickups[chunkIndex]) return;
-    const rng = new Random(98765 + chunkIndex * 2000);
-    const coins = [];
-    const fuelPickups = [];
-    const startIndex = chunkIndex * 30;
-    for (let i = 0; i < 30; i += 5) {
-      if (rng.next() > 0.4) {
-        const x = (startIndex + i) * 35;
-        const y = terrain.getY(x) - 80;
-        coins.push({ x: x, y: y, collected: false, rotation: 0 });
-      }
-    }
-    for (let i = 0; i < 30; i += 15) {
-      if (rng.next() > 0.6) {
-        const x = (startIndex + i) * 35;
-        const y = terrain.getY(x) - 70;
-        fuelPickups.push({ x: x, y: y, collected: false, pulse: 0 });
-      }
-    }
-    this.coins[chunkIndex] = coins;
-    this.fuelPickups[chunkIndex] = fuelPickups;
-  }
-  cleanup(cameraX) {
-    const currentChunk = this.getChunkIndex(cameraX);
-    const coinKeys = Object.keys(this.coins);
-    for (let i = 0; i < coinKeys.length; i++) {
-      const key = parseInt(coinKeys[i]);
-      if (key < currentChunk - 5) {
-        delete this.coins[key];
-      }
-    }
-    const fuelKeys = Object.keys(this.fuelPickups);
-    for (let i = 0; i < fuelKeys.length; i++) {
-      const key = parseInt(fuelKeys[i]);
-      if (key < currentChunk - 5) {
-        delete this.fuelPickups[key];
-      }
-    }
-  }
-  ensureChunks(cameraX, terrain) {
-    const currentChunk = this.getChunkIndex(cameraX);
-    for (let i = currentChunk - 2; i <= currentChunk + 3; i++) {
-      this.generateChunk(i, terrain);
-    }
-  }
-  update() {
-    const coinKeys = Object.keys(this.coins);
-    for (let k = 0; k < coinKeys.length; k++) {
-      const coins = this.coins[coinKeys[k]];
-      for (let i = 0; i < coins.length; i++) {
-        if (!coins[i].collected) {
-          coins[i].rotation += 0.1;
-        }
-      }
-    }
-    const fuelKeys = Object.keys(this.fuelPickups);
-    for (let k = 0; k < fuelKeys.length; k++) {
-      const fuels = this.fuelPickups[fuelKeys[k]];
-      for (let i = 0; i < fuels.length; i++) {
-        if (!fuels[i].collected) {
-          fuels[i].pulse += 0.1;
-        }
-      }
-    }
-  }
-  checkCollisions(car) {
-    let coinsCollected = 0;
-    let fuelCollected = 0;
-    const coinKeys = Object.keys(this.coins);
-    for (let k = 0; k < coinKeys.length; k++) {
-      const coins = this.coins[coinKeys[k]];
-      for (let i = 0; i < coins.length; i++) {
-        const coin = coins[i];
-        if (!coin.collected) {
-          const dx = car.x - coin.x;
-          const dy = car.y - coin.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < 50) {
-            coin.collected = true;
-            coinsCollected++;
-          }
-        }
-      }
-    }
-    const fuelKeys = Object.keys(this.fuelPickups);
-    for (let k = 0; k < fuelKeys.length; k++) {
-      const fuels = this.fuelPickups[fuelKeys[k]];
-      for (let i = 0; i < fuels.length; i++) {
-        const fuel = fuels[i];
-        if (!fuel.collected) {
-          const dx = car.x - fuel.x;
-          const dy = car.y - fuel.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < 50) {
-            fuel.collected = true;
-            fuelCollected++;
-          }
-        }
-      }
-    }
-    return { coinsCollected: coinsCollected, fuelCollected: fuelCollected };
-  }
-  render(ctx, camera) {
-    ctx.save();
-    ctx.translate(-camera.x, -camera.y);
-    const coinKeys = Object.keys(this.coins);
-    for (let k = 0; k < coinKeys.length; k++) {
-      const coins = this.coins[coinKeys[k]];
-      for (let i = 0; i < coins.length; i++) {
-        const coin = coins[i];
-        if (!coin.collected) {
-          ctx.save();
-          ctx.translate(coin.x, coin.y);
-          ctx.rotate(coin.rotation);
-          ctx.fillStyle = '#FFD700';
-          ctx.strokeStyle = '#FFA500';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(0, 0, 12, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-          ctx.restore();
-        }
-      }
-    }
-    const fuelKeys = Object.keys(this.fuelPickups);
-    for (let k = 0; k < fuelKeys.length; k++) {
-      const fuels = this.fuelPickups[fuelKeys[k]];
-      for (let i = 0; i < fuels.length; i++) {
-        const fuel = fuels[i];
-        if (!fuel.collected) {
-          ctx.save();
-          ctx.translate(fuel.x, fuel.y);
-          const scale = 1 + Math.sin(fuel.pulse) * 0.1;
-          ctx.scale(scale, scale);
-          ctx.fillStyle = '#ff4444';
-          ctx.strokeStyle = '#cc0000';
-          ctx.lineWidth = 3;
-          ctx.fillRect(-15, -20, 30, 40);
-          ctx.strokeRect(-15, -20, 30, 40);
-          ctx.restore();
-        }
-      }
-    }
-    ctx.restore();
-  }
-}
-
-class F1Car {
-  constructor(carConfig, mapConfig, upgrades) {
-    this.x = 300;
-    this.y = 200;
-    this.vx = 0;
-    this.vy = 0;
-    this.angle = 0;
-    this.angularVel = 0;
-    this.wheelAngle = 0;
-    this.onGround = false;
-    this.flippedTime = 0;
-    
-    this.throttle = 0;
-    
-    const gripBonus = upgrades.grip || 0;
-    const suspensionBonus = upgrades.suspension || 0;
-    const speedBonus = upgrades.speed || 0;
-    const fuelBonus = upgrades.fuel || 0;
-    const nitroBonus = upgrades.nitro || 0;
-    
-    this.maxSpeed = (carConfig.speed + speedBonus * 2) * 1.2;
-    this.accel = carConfig.accel + gripBonus * 0.1;
-    this.grip = Math.min(carConfig.grip + gripBonus * 0.15, 1.5);
-    this.suspension = carConfig.suspension + suspensionBonus * 0.1;
-    this.fuelEff = carConfig.fuelEff;
-    this.weight = carConfig.weight;
-    this.gravity = mapConfig.gravity;
-    this.friction = mapConfig.friction;
-    
-    this.fuel = 100 + fuelBonus * 20;
-    this.maxFuel = 100 + fuelBonus * 20;
-    this.nitro = 100 + nitroBonus * 20;
-    this.maxNitro = 100 + nitroBonus * 20;
-    this.jumpCooldown = 0;
-    this.maxJumpCooldown = 60;
-  }
-  
-  update(terrain, keys, particleSystem, audio) {
-    const accelerating = keys['ArrowUp'] || keys['w'] || keys['W'] || keys['accel'];
-    const braking = keys['ArrowDown'] || keys['s'] || keys['S'] || keys['brake'];
-    const nitro = keys['Shift'] || keys['nitro'];
-    const jump = keys[' '] || keys['jump'];
-    
-    if (accelerating && this.fuel > 0) {
-      this.throttle = Math.min(this.throttle + 0.05, 1);
-      this.fuel -= 0.012 * this.fuelEff;
-    } else {
-      this.throttle = Math.max(this.throttle - 0.05, 0);
-    }
-    
-    if (braking) {
-      this.throttle = Math.max(this.throttle - 0.1, -0.5);
-    }
-    
-    this.vx += this.throttle * this.accel;
-    
-    if (nitro && this.nitro > 0 && this.fuel > 0) {
-      this.vx += 0.3;
-      this.nitro -= 0.5;
-      this.fuel -= 0.02;
-      audio.playSound('nitro');
-    } else {
-      this.nitro = Math.min(this.nitro + 0.1, this.maxNitro);
-    }
-    
-    if (jump && this.onGround && this.jumpCooldown <= 0) {
-      this.vy = -12;
-      this.jumpCooldown = this.maxJumpCooldown;
-      particleSystem.emit(this.x, this.y + 15, 10, 'dust');
-    }
-    
-    this.jumpCooldown = Math.max(this.jumpCooldown - 1, 0);
-    
-    this.fuel = Math.max(0, this.fuel);
-    this.nitro = Math.max(0, this.nitro);
-    
-    if (this.vx > 5) {
-      this.vy -= 0.15;
-    }
-    
-    this.vx = Math.max(-this.maxSpeed, Math.min(this.maxSpeed, this.vx));
-    this.vx *= this.friction;
-    
-    this.vy += this.gravity;
-    
-    this.x += this.vx;
-    this.y += this.vy;
-    
-    const cos = Math.cos(this.angle);
-    const sin = Math.sin(this.angle);
-    
-    const wheelLeftX = this.x + cos * (-50) - sin * 15;
-    const wheelLeftY = this.y + sin * (-50) + cos * 15;
-    const wheelRightX = this.x + cos * 50 - sin * 15;
-    const wheelRightY = this.y + sin * 50 + cos * 15;
-    
-    const groundLeftY = terrain.getY(wheelLeftX);
-    const groundRightY = terrain.getY(wheelRightX);
-    
-    const leftContact = wheelLeftY + 18 > groundLeftY;
-    const rightContact = wheelRightY + 20 > groundRightY;
-    
-    const wasOnGround = this.onGround;
-    this.onGround = leftContact || rightContact;
-    
-    if (!wasOnGround && this.onGround && this.vy > 8) {
-      particleSystem.emit(this.x, this.y + 15, 15, 'dust');
-      particleSystem.emit(this.x, this.y + 15, 8, 'spark');
-    }
-    
-    if (leftContact) {
-      const penetration = (wheelLeftY + 18) - groundLeftY;
-      const force = penetration * (0.5 + this.suspension * 0.3);
-      this.vy -= force;
-      this.vy *= 0.75;
-      this.angularVel += force * 0.015 * this.grip;
-    }
-    
-    if (rightContact) {
-      const penetration = (wheelRightY + 20) - groundRightY;
-      const force = penetration * (0.5 + this.suspension * 0.3);
-      this.vy -= force;
-      this.vy *= 0.75;
-      this.angularVel -= force * 0.015 * this.grip;
-    }
-    
-    if (this.onGround) {
-      const targetAngle = terrain.getAngle(this.x);
-      this.angle += (targetAngle - this.angle) * (0.1 + this.grip * 0.1);
-    }
-    
-    this.angularVel = Math.max(-0.3, Math.min(0.3, this.angularVel));
-    this.angle += this.angularVel;
-    this.angularVel *= 0.95;
-    
-    this.wheelAngle += this.vx * 0.15;
-  }
-  
-  isFlipped() {
-    const normalizedAngle = ((this.angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-    return normalizedAngle > 2.0 && normalizedAngle < (Math.PI * 2 - 2.0);
-  }
-  
-  getSpeed() {
-    return Math.abs(this.vx);
-  }
-  
-  render(ctx, camera, terrain) {
-    ctx.save();
-    ctx.translate(-camera.x, -camera.y);
-    
-    const shadowY = terrain.getY(this.x);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-    ctx.beginPath();
-    ctx.ellipse(this.x, shadowY, 60, 15, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.angle);
-    
-    ctx.fillStyle = '#cc0000';
-    ctx.strokeStyle = '#990000';
-    ctx.lineWidth = 3;
-    ctx.fillRect(-50, -15, 100, 30);
-    ctx.strokeRect(-50, -15, 100, 30);
-    
-    ctx.fillStyle = '#222';
-    ctx.fillRect(-20, -15, 40, 12);
-    
-    ctx.fillStyle = '#111';
-    ctx.fillRect(-50, -23, 25, 5);
-    ctx.fillRect(25, -23, 25, 5);
-    
-    ctx.restore();
-    
-    this.renderWheel(ctx, this.x, this.y, this.angle, -50, 0, 18);
-    this.renderWheel(ctx, this.x, this.y, this.angle, 50, 0, 20);
-    
-    ctx.restore();
-  }
-  
-  renderWheel(ctx, carX, carY, carAngle, offset, suspension, radius) {
-    const cos = Math.cos(carAngle);
-    const sin = Math.sin(carAngle);
-    const wheelX = carX + cos * offset - sin * 15;
-    const wheelY = carY + sin * offset + cos * 15 + suspension * 0.5;
-    
-    ctx.save();
-    ctx.translate(wheelX, wheelY);
-    ctx.rotate(this.wheelAngle);
-    
-    ctx.fillStyle = '#222';
-    ctx.strokeStyle = '#555';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    
-    ctx.strokeStyle = '#777';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(angle) * (radius - 4), Math.sin(angle) * (radius - 4));
-      ctx.stroke();
-    }
-    
-    ctx.restore();
-  }
-}
-
-class Game {
-  constructor(gameData) {
-    this.gameData = gameData;
-    this.canvas = document.getElementById('canvas');
-    this.ctx = this.canvas.getContext('2d');
-    this.audio = new AudioSystem();
-    
-    this.resize();
-    window.addEventListener('resize', this.resize.bind(this));
-    
-    this.keys = {};
-    this.paused = false;
-    this.setupControls();
-    
-    const selectedCar = CARS.find(c => c.id === gameData.selectedCar);
-    const selectedMap = MAPS.find(m => m.id === gameData.selectedMap);
-    
-    const upgrades = {
-      grip: gameData.getUpgradeBonus('grip'),
-      suspension: gameData.getUpgradeBonus('suspension'),
-      speed: gameData.getUpgradeBonus('engine'),
-      fuel: gameData.getUpgradeBonus('fuel'),
-      nitro: gameData.getUpgradeBonus('nitro')
-    };
-    
-    this.mapConfig = selectedMap;
-    this.terrain = new InfiniteTerrain(selectedMap);
-    this.car = new F1Car(selectedCar, selectedMap, upgrades);
-    this.collectibles = new InfiniteCollectibles();
-    this.particleSystem = new ParticleSystem();
-    
-    this.camera = { x: 0, y: 0 };
-    this.distance = 0;
-    this.coins = 0;
-    this.gameOver = false;
-    this.gameOverReason = '';
-    this.flipStartTime = 0;
-    
-    this.updateUI();
-    
-    this.audio.startEngine();
-    this.animate();
-  }
-  
-  resize() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-  }
-  
-  setupControls() {
-    var self = this;
-    
-    window.addEventListener('keydown', function(e) {
-      if (e.key === 'p' || e.key === 'P') {
-        self.togglePause();
-        return;
-      }
-      self.keys[e.key] = true;
-    });
-    
-    window.addEventListener('keyup', function(e) {
-      self.keys[e.key] = false;
-    });
-    
-    var setupTouchButton = function(btn, keyName) {
-      btn.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        self.keys[keyName] = true;
-        btn.classList.add('active');
-      });
-      btn.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        self.keys[keyName] = false;
-        btn.classList.remove('active');
-      });
-      btn.addEventListener('touchcancel', function(e) {
-        e.preventDefault();
-        self.keys[keyName] = false;
-        btn.classList.remove('active');
-      });
-    };
-    
-    setupTouchButton(document.getElementById('accelBtn'), 'accel');
-    setupTouchButton(document.getElementById('brakeBtn'), 'brake');
-    setupTouchButton(document.getElementById('nitroBtn'), 'nitro');
-    setupTouchButton(document.getElementById('jumpBtn'), 'jump');
-    
-    document.getElementById('pauseBtn').addEventListener('click', function() {
-      self.togglePause();
-    });
-    
-    document.getElementById('resumeBtn').addEventListener('click', function() {
-      self.togglePause();
-    });
-    
-    document.getElementById('menuBtn').addEventListener('click', function() {
-      self.returnToMenu();
-    });
-    
-    document.getElementById('restartBtn').addEventListener('click', function() {
-      self.restart();
-    });
-    
-    document.getElementById('menuBtnGameOver').addEventListener('click', function() {
-      self.returnToMenu();
-    });
-    
-    document.getElementById('fullscreenBtn').addEventListener('click', function() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(function() {});
-      } else {
-        document.exitFullscreen();
-      }
-    });
-  }
-  
-  togglePause() {
-    if (this.gameOver) return;
-    this.paused = !this.paused;
-    document.getElementById('pauseOverlay').classList.toggle('show', this.paused);
-    if (this.paused) {
-      this.audio.stopEngine();
-    } else {
-      this.audio.startEngine();
-    }
-  }
-  
-  restart() {
-    document.getElementById('gameOver').classList.remove('show');
-    
-    const selectedCar = CARS.find(c => c.id === this.gameData.selectedCar);
-    const selectedMap = MAPS.find(m => m.id === this.gameData.selectedMap);
-    
-    const upgrades = {
-      grip: this.gameData.getUpgradeBonus('grip'),
-      suspension: this.gameData.getUpgradeBonus('suspension'),
-      speed: this.gameData.getUpgradeBonus('engine'),
-      fuel: this.gameData.getUpgradeBonus('fuel'),
-      nitro: this.gameData.getUpgradeBonus('nitro')
-    };
-    
-    this.terrain = new InfiniteTerrain(selectedMap);
-    this.car = new F1Car(selectedCar, selectedMap, upgrades);
-    this.collectibles = new InfiniteCollectibles();
-    this.particleSystem = new ParticleSystem();
-    
-    this.camera = { x: 0, y: 0 };
-    this.distance = 0;
-    this.coins = 0;
-    this.gameOver = false;
-    this.gameOverReason = '';
-    this.flipStartTime = 0;
-    this.paused = false;
-    
-    this.updateUI();
-    this.audio.startEngine();
-  }
-  
-  returnToMenu() {
-    this.audio.stopEngine();
-    document.getElementById('lobby').classList.remove('hide');
-    document.getElementById('canvas').classList.remove('show');
-    document.getElementById('ui').classList.remove('show');
-    document.getElementById('pauseOverlay').classList.remove('show');
-    document.getElementById('gameOver').classList.remove('show');
-  }
-  
-  update() {
-    if (this.paused || this.gameOver) return;
-    
-    this.car.update(this.terrain, this.keys, this.particleSystem, this.audio);
-    this.particleSystem.update();
-    
-    this.terrain.ensureChunks(this.camera.x);
-    this.terrain.cleanup(this.camera.x);
-    this.collectibles.ensureChunks(this.camera.x, this.terrain);
-    this.collectibles.cleanup(this.camera.x);
-    this.collectibles.update();
-    
-    var result = this.collectibles.checkCollisions(this.car);
-    
-    if (result.coinsCollected > 0) {
-      this.coins += result.coinsCollected;
-      this.car.fuel = Math.min(this.car.fuel + result.coinsCollected * 2, this.car.maxFuel);
-      this.audio.playSound('coin');
-    }
-    
-    if (result.fuelCollected > 0) {
-      this.car.fuel = Math.min(this.car.fuel + 25, this.car.maxFuel);
-      this.audio.playSound('fuel');
-    }
-    
-    this.camera.x += (this.car.x - this.canvas.width * 0.35 - this.camera.x) * 0.08;
-    this.camera.y += (this.car.y - this.canvas.height * 0.55 - this.camera.y) * 0.08;
-    
-    this.distance = Math.max(this.distance, Math.floor(this.car.x / 10));
-    
-    if (this.distance > this.gameData.bestDistance) {
-      this.gameData.bestDistance = this.distance;
-      this.gameData.save();
-    }
-    
-    if (this.car.fuel <= 0 && Math.abs(this.car.vx) < 0.1) {
-      this.endGame('⛽ Out of Fuel!');
-    }
-    
-    if (this.car.isFlipped()) {
-      if (this.flipStartTime === 0) {
-        this.flipStartTime = Date.now();
-      } else if (Date.now() - this.flipStartTime > 2000) {
-        this.endGame('💥 Crashed!');
-      }
-    } else {
-      this.flipStartTime = 0;
-    }
-    
-    if (this.car.y > this.camera.y + this.canvas.height + 800) {
-      this.endGame('🗺️ Out of Map!');
-    }
-    
-    this.audio.updateEngine(this.car.getSpeed(), this.keys['nitro'] || this.keys['Shift']);
-    this.updateUI();
-  }
-  
-  updateUI() {
-    document.getElementById('distance').textContent = this.distance;
-    document.getElementById('coins').textContent = this.coins;
-    document.getElementById('best').textContent = this.gameData.bestDistance;
-    
-    var fuelPercent = (this.car.fuel / this.car.maxFuel) * 100;
-    var fuelFill = document.getElementById('fuelFill');
-    fuelFill.style.width = fuelPercent + '%';
-    if (fuelPercent < 20) {
-      fuelFill.classList.add('low');
-    } else {
-      fuelFill.classList.remove('low');
-    }
-    
-    var nitroPercent = (this.car.nitro / this.car.maxNitro) * 100;
-    document.getElementById('nitroFill').style.width = nitroPercent + '%';
-    
-    var jumpPercent = ((this.car.maxJumpCooldown - this.car.jumpCooldown) / this.car.maxJumpCooldown) * 100;
-    document.getElementById('jumpFill').style.width = jumpPercent + '%';
-    
-    var speed = Math.round(this.car.getSpeed() * 10);
-    document.getElementById('speedValue').textContent = speed;
-  }
-  
-  endGame(reason) {
-    this.gameOver = true;
-    this.gameOverReason = reason;
-    this.gameData.addCoins(this.coins);
-    this.audio.stopEngine();
-    this.audio.playSound('crash');
-    
-    document.getElementById('gameOverTitle').textContent = reason;
-    document.getElementById('finalDistance').textContent = this.distance;
-    document.getElementById('finalCoins').textContent = this.coins;
-    document.getElementById('gameOver').classList.add('show');
-  }
-  
-  render() {
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    
-    var gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-    const colors = this.mapConfig.bgColors;
-    gradient.addColorStop(0, colors[0]);
-    gradient.addColorStop(0.5, colors[1]);
-    gradient.addColorStop(1, colors[2]);
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    this.terrain.render(this.ctx, this.camera, this.canvas.height, this.mapConfig.bgColors);
-    this.collectibles.render(this.ctx, this.camera);
-    this.particleSystem.render(this.ctx, this.camera);
-    this.car.render(this.ctx, this.camera, this.terrain);
-  }
-  
-  animate() {
-    this.update();
-    this.render();
-    requestAnimationFrame(this.animate.bind(this));
-  }
-}
-
-class Lobby {
-  constructor() {
-    this.gameData = new GameData();
-    this.setupUI();
-  }
-  
-  setupUI() {
-    var self = this;
-    
-    document.querySelectorAll('.tab-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
         
-        document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
-        document.getElementById(btn.dataset.tab + '-tab').classList.add('active');
-      });
-    });
-    
-    this.renderCars();
-    this.renderMaps();
-    this.renderUpgrades();
-    
-    document.getElementById('playBtn').addEventListener('click', function() {
-      self.startGame();
-    });
-  }
-  
-  renderCars() {
-    var self = this;
-    var grid = document.getElementById('carGrid');
-    grid.innerHTML = '';
-    
-    CARS.forEach(function(car) {
-      var div = document.createElement('div');
-      div.className = 'car-card';
-      
-      var owned = self.gameData.ownedCars.includes(car.id);
-      var selected = self.gameData.selectedCar === car.id;
-      
-      if (!owned) div.classList.add('locked');
-      if (selected) div.classList.add('selected');
-      
-      var statsHTML = '';
-      statsHTML += '<div class="stat-bar"><div class="stat-fill" style="width:' + (car.speed / 20 * 100) + '%"></div></div>';
-      statsHTML += '<div class="stat-bar"><div class="stat-fill" style="width:' + (car.accel * 100) + '%"></div></div>';
-      statsHTML += '<div class="stat-bar"><div class="stat-fill" style="width:' + (car.grip * 100) + '%"></div></div>';
-      
-      div.innerHTML = '<div class="car-name">' + car.name + '</div>' +
-                      '<div class="car-stats">' + (owned ? 'OWNED' : '🔒 ' + car.cost + ' coins') + '</div>' +
-                      '<div class="car-stats">' + statsHTML + '</div>';
-      
-      div.addEventListener('click', function() {
-        if (!owned) {
-          if (self.gameData.buyCar(car.id)) {
-            self.renderCars();
-            self.renderUpgrades();
-          } else {
-            alert('Not enough coins!');
-          }
-        } else {
-          self.gameData.selectedCar = car.id;
-          self.gameData.save();
-          self.renderCars();
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-      });
-      
-      grid.appendChild(div);
-    });
-  }
-  
-  renderMaps() {
-    var self = this;
-    var grid = document.getElementById('mapGrid');
-    grid.innerHTML = '';
-    
-    MAPS.forEach(function(map) {
-      var div = document.createElement('div');
-      div.className = 'map-card';
-      
-      if (self.gameData.selectedMap === map.id) div.classList.add('selected');
-      
-      div.innerHTML = '<div class="map-name">' + map.name + '</div>' +
-                      '<div class="map-stats">Gravity: ' + map.gravity + '</div>' +
-                      '<div class="map-stats">Roughness: ' + map.roughness + '</div>';
-      
-      div.addEventListener('click', function() {
-        self.gameData.selectedMap = map.id;
-        self.gameData.save();
-        self.renderMaps();
-      });
-      
-      grid.appendChild(div);
-    });
-  }
-  
-  renderUpgrades() {
-    var self = this;
-    var list = document.getElementById('upgradeList');
-    list.innerHTML = '<div style="color:#fd0;padding:10px;text-align:center">💰 ' + this.gameData.coins + ' coins</div>';
-    
-    UPGRADES.forEach(function(upgrade) {
-      var currentLevel = self.gameData.upgrades[upgrade.id] || 0;
-      var maxed = currentLevel >= upgrade.maxLevel;
-      var cost = upgrade.baseCost * (currentLevel + 1);
-      
-      var div = document.createElement('div');
-      div.className = 'upgrade-item';
-      
-      var btn = document.createElement('button');
-      btn.className = 'upgrade-btn';
-      btn.textContent = maxed ? 'MAX' : 'Upgrade (' + cost + ')';
-      btn.disabled = maxed || self.gameData.coins < cost;
-      
-      btn.addEventListener('click', function() {
-        if (self.gameData.buyUpgrade(upgrade.id)) {
-          self.renderUpgrades();
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Game State
+        const gameState = {
+            screen: 'mainMenu',
+            paused: false,
+            coins: 0,
+            selectedMap: 'hills',
+            selectedCar: 'basic',
+            upgrades: {
+                engine: 0,
+                suspension: 0,
+                tires: 0,
+                fuel: 0
+            },
+            unlockedMaps: ['hills'],
+            unlockedCars: ['basic']
+        };
+
+        // Maps Configuration
+        const maps = {
+            hills: {
+                name: 'Green Hills',
+                cost: 0,
+                bgColor: '#87CEEB',
+                groundColor: '#228B22',
+                roughness: 0.3,
+                gravity: 0.5,
+                friction: 0.7
+            },
+            desert: {
+                name: 'Desert Dunes',
+                cost: 500,
+                bgColor: '#FFD700',
+                groundColor: '#DEB887',
+                roughness: 0.4,
+                gravity: 0.5,
+                friction: 0.65
+            },
+            ice: {
+                name: 'Ice Valley',
+                cost: 1000,
+                bgColor: '#B0E0E6',
+                groundColor: '#E0FFFF',
+                roughness: 0.2,
+                gravity: 0.5,
+                friction: 0.3
+            },
+            moon: {
+                name: 'Moon Surface',
+                cost: 2000,
+                bgColor: '#1a1a2e',
+                groundColor: '#4a4a5e',
+                roughness: 0.35,
+                gravity: 0.2,
+                friction: 0.6
+            }
+        };
+
+        // Cars Configuration
+        const cars = {
+            basic: {
+                name: 'Basic Buggy',
+                cost: 0,
+                acceleration: 0.3,
+                maxSpeed: 15,
+                color: '#FF0000'
+            },
+            racer: {
+                name: 'Speed Racer',
+                cost: 800,
+                acceleration: 0.4,
+                maxSpeed: 18,
+                color: '#0000FF'
+            },
+            monster: {
+                name: 'Monster Truck',
+                cost: 1500,
+                acceleration: 0.25,
+                maxSpeed: 12,
+                color: '#00FF00'
+            },
+            formula: {
+                name: 'F1 Formula',
+                cost: 3000,
+                acceleration: 0.5,
+                maxSpeed: 22,
+                color: '#FFD700'
+            }
+        };
+
+        // Upgrades Configuration
+        const upgradeConfigs = {
+            engine: { name: 'Engine', maxLevel: 5, baseCost: 200 },
+            suspension: { name: 'Suspension', maxLevel: 5, baseCost: 150 },
+            tires: { name: 'Tires', maxLevel: 5, baseCost: 100 },
+            fuel: { name: 'Fuel Tank', maxLevel: 5, baseCost: 180 }
+        };
+
+        // Load game data
+        function loadGame() {
+            const saved = localStorage.getItem('f1HillClimbGame');
+            if (saved) {
+                const data = JSON.parse(saved);
+                gameState.coins = data.coins || 0;
+                gameState.selectedMap = data.selectedMap || 'hills';
+                gameState.selectedCar = data.selectedCar || 'basic';
+                gameState.upgrades = data.upgrades || { engine: 0, suspension: 0, tires: 0, fuel: 0 };
+                gameState.unlockedMaps = data.unlockedMaps || ['hills'];
+                gameState.unlockedCars = data.unlockedCars || ['basic'];
+            }
+            updateAllCoinsDisplay();
         }
-      });
-      
-      div.innerHTML = '<div class="upgrade-info">' +
-                      '<div class="upgrade-name">' + upgrade.name + ' - ' + upgrade.desc + '</div>' +
-                      '<div class="upgrade-level">Level: ' + currentLevel + '/' + upgrade.maxLevel + '</div>' +
-                      '</div>';
-      
-      div.appendChild(btn);
-      list.appendChild(div);
-    });
-  }
-  
-  startGame() {
-    document.getElementById('lobby').classList.add('hide');
-    document.getElementById('canvas').classList.add('show');
-    document.getElementById('ui').classList.add('show');
-    new Game(this.gameData);
-  }
-}
 
-window.addEventListener('load', function() {
-  new Lobby();
-});
+        // Save game data
+        function saveGame() {
+            const data = {
+                coins: gameState.coins,
+                selectedMap: gameState.selectedMap,
+                selectedCar: gameState.selectedCar,
+                upgrades: gameState.upgrades,
+                unlockedMaps: gameState.unlockedMaps,
+                unlockedCars: gameState.unlockedCars
+            };
+            localStorage.setItem('f1HillClimbGame', JSON.stringify(data));
+            updateAllCoinsDisplay();
+        }
 
-})();
-</script>
+        // Update all coins displays
+        function updateAllCoinsDisplay() {
+            document.getElementById('menuCoins').textContent = gameState.coins;
+            document.getElementById('mapCoins').textContent = gameState.coins;
+            document.getElementById('garageCoins').textContent = gameState.coins;
+            document.getElementById('upgradeCoins').textContent = gameState.coins;
+        }
 
+        // Screen Management
+        function showScreen(screenName) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenName).classList.add('active');
+            gameState.screen = screenName;
+            
+            if (screenName === 'mainMenu' || screenName === 'mapSelect' || 
+                screenName === 'garage' || screenName === 'upgrades') {
+                updateAllCoinsDisplay();
+            }
+            
+            if (screenName === 'mapSelect') renderMapGrid();
+            if (screenName === 'garage') renderCarGrid();
+            if (screenName === 'upgrades') renderUpgradeGrid();
+        }
+
+        // Render Map Grid
+        function renderMapGrid() {
+            const grid = document.getElementById('mapGrid');
+            grid.innerHTML = '';
+            Object.keys(maps).forEach(mapId => {
+                const map = maps[mapId];
+                const unlocked = gameState.unlockedMaps.includes(mapId);
+                const selected = gameState.selectedMap === mapId;
+                const card = document.createElement('div');
+                card.className = `map-card ${selected ? 'selected' : ''} ${!unlocked ? 'locked' : ''}`;
+                card.innerHTML = `
+                    <h3>${map.name}</h3>
+                    <p>${unlocked ? 'Unlocked' : `🔒 ${map.cost} coins`}</p>
+                `;
+                card.onclick = () => {
+                    if (unlocked) {
+                        gameState.selectedMap = mapId;
+                        saveGame();
+                        renderMapGrid();
+                    } else if (gameState.coins >= map.cost) {
+                        gameState.coins -= map.cost;
+                        gameState.unlockedMaps.push(mapId);
+                        gameState.selectedMap = mapId;
+                        saveGame();
+                        renderMapGrid();
+                    }
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        // Render Car Grid
+        function renderCarGrid() {
+            const grid = document.getElementById('carGrid');
+            grid.innerHTML = '';
+            Object.keys(cars).forEach(carId => {
+                const car = cars[carId];
+                const unlocked = gameState.unlockedCars.includes(carId);
+                const selected = gameState.selectedCar === carId;
+                const card = document.createElement('div');
+                card.className = `car-card ${selected ? 'selected' : ''} ${!unlocked ? 'locked' : ''}`;
+                card.innerHTML = `
+                    <h3>${car.name}</h3>
+                    <p>${unlocked ? 'Unlocked' : `🔒 ${car.cost} coins`}</p>
+                `;
+                card.onclick = () => {
+                    if (unlocked) {
+                        gameState.selectedCar = carId;
+                        saveGame();
+                        renderCarGrid();
+                    } else if (gameState.coins >= car.cost) {
+                        gameState.coins -= car.cost;
+                        gameState.unlockedCars.push(carId);
+                        gameState.selectedCar = carId;
+                        saveGame();
+                        renderCarGrid();
+                    }
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        // Render Upgrade Grid
+        function renderUpgradeGrid() {
+            const grid = document.getElementById('upgradeGrid');
+            grid.innerHTML = '';
+            Object.keys(upgradeConfigs).forEach(upgradeId => {
+                const upgrade = upgradeConfigs[upgradeId];
+                const currentLevel = gameState.upgrades[upgradeId];
+                const maxLevel = upgrade.maxLevel;
+                const cost = upgrade.baseCost * (currentLevel + 1);
+                const card = document.createElement('div');
+                card.className = `upgrade-card ${currentLevel >= maxLevel ? 'locked' : ''}`;
+                card.innerHTML = `
+                    <h3>${upgrade.name}</h3>
+                    <p>Level: ${currentLevel}/${maxLevel}</p>
+                    <p>${currentLevel >= maxLevel ? 'MAX' : `Upgrade: ${cost} coins`}</p>
+                `;
+                card.onclick = () => {
+                    if (currentLevel < maxLevel && gameState.coins >= cost) {
+                        gameState.coins -= cost;
+                        gameState.upgrades[upgradeId]++;
+                        saveGame();
+                        renderUpgradeGrid();
+                    }
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        // Game Variables
+        let gameRunning = false;
+        let terrain = [];
+        let camera = { x: 0, y: 0 };
+        let car = null;
+        let coins = [];
+        let distance = 0;
+        let fuel = 100;
+        let coinsCollected = 0;
+
+        // Input State
+        const input = {
+            gas: false,
+            brake: false,
+            jump: false,
+            nitro: false,
+            tiltUp: false,
+            tiltDown: false
+        };
+
+        // Physics Constants (UPDATED FOR STABILITY)
+        const PHYSICS = {
+            JUMP_FORCE: -9.5,           // Reduced from -12 to -9.5
+            SUSPENSION_STIFFNESS: 0.3,
+            SUSPENSION_DAMPING: 0.85,   // Increased from 0.6 to 0.85
+            MAX_ANGULAR_VEL: 0.15,      // Reduced from 0.3 to 0.15 (stricter clamp)
+            GROUND_ALIGN_FORCE: 0.08,   // Increased from 0.03 to 0.08
+            AIR_TILT_TORQUE: 0.003,     // Air control strength
+            PENETRATION_FORCE: 0.25     // Reduced from 0.4 to 0.25
+        };
+
+        // Car Physics Object
+        class Car {
+            constructor() {
+                const carConfig = cars[gameState.selectedCar];
+                this.x = 100;
+                this.y = 300;
+                this.vx = 0;
+                this.vy = 0;
+                this.angle = 0;
+                this.angularVel = 0;
+                this.width = 60;
+                this.height = 30;
+                this.wheelRadius = 15;
+                this.wheelBase = 40;
+                this.onGround = false;
+                this.acceleration = carConfig.acceleration * (1 + gameState.upgrades.engine * 0.1);
+                this.maxSpeed = carConfig.maxSpeed * (1 + gameState.upgrades.engine * 0.05);
+                this.color = carConfig.color;
+                this.suspensionBonus = gameState.upgrades.suspension * 0.05;
+                this.frictionBonus = gameState.upgrades.tires * 0.05;
+                this.canJump = true;
+            }
+
+            update() {
+                const mapConfig = maps[gameState.selectedMap];
+                const gravity = mapConfig.gravity;
+                const friction = mapConfig.friction + this.frictionBonus;
+
+                // Gravity
+                this.vy += gravity;
+
+                // Ground detection
+                const wheels = this.getWheels();
+                let touchingGround = false;
+                let groundAngle = 0;
+                let groundY = 0;
+                let contactCount = 0;
+
+                wheels.forEach(wheel => {
+                    const terrainY = getTerrainY(wheel.x);
+                    if (wheel.y + this.wheelRadius > terrainY) {
+                        touchingGround = true;
+                        const penetration = (wheel.y + this.wheelRadius) - terrainY;
+                        
+                        // Reduced penetration force
+                        this.vy -= penetration * PHYSICS.PENETRATION_FORCE;
+                        this.y -= penetration * 0.3;
+                        
+                        // Suspension
+                        this.vy *= (PHYSICS.SUSPENSION_DAMPING - this.suspensionBonus);
+                        
+                        // Calculate ground angle
+                        const dx = 10;
+                        const y1 = getTerrainY(wheel.x - dx);
+                        const y2 = getTerrainY(wheel.x + dx);
+                        groundAngle += Math.atan2(y2 - y1, dx * 2);
+                        groundY += terrainY;
+                        contactCount++;
+                    }
+                });
+
+                if (contactCount > 0) {
+                    groundAngle /= contactCount;
+                    groundY /= contactCount;
+                }
+
+                this.onGround = touchingGround;
+
+                // Ground alignment (stronger)
+                if (this.onGround && contactCount > 0) {
+                    const angleDiff = groundAngle - this.angle;
+                    this.angularVel += angleDiff * PHYSICS.GROUND_ALIGN_FORCE;
+                }
+
+                // Air control (tilt) - ONLY when airborne
+                if (!this.onGround) {
+                    if (input.tiltUp) {
+                        this.angularVel -= PHYSICS.AIR_TILT_TORQUE;
+                    }
+                    if (input.tiltDown) {
+                        this.angularVel += PHYSICS.AIR_TILT_TORQUE;
+                    }
+                }
+
+                // Gas
+                if (input.gas && fuel > 0) {
+                    const force = Math.cos(this.angle) * this.acceleration;
+                    this.vx += force;
+                    fuel -= 0.05;
+                    fuel = Math.max(0, fuel);
+                }
+
+                // Brake
+                if (input.brake) {
+                    this.vx *= 0.95;
+                }
+
+                // Nitro
+                if (input.nitro && fuel > 5) {
+                    this.vx += Math.cos(this.angle) * this.acceleration * 2;
+                    fuel -= 0.2;
+                    fuel = Math.max(0, fuel);
+                }
+
+                // Jump (only when on ground and can jump)
+                if (input.jump && this.onGround && this.canJump) {
+                    this.vy += PHYSICS.JUMP_FORCE;
+                    this.canJump = false;
+                }
+
+                // Reset jump when not pressing
+                if (!input.jump) {
+                    this.canJump = true;
+                }
+
+                // Friction
+                if (this.onGround) {
+                    this.vx *= friction;
+                }
+
+                // Speed limit
+                this.vx = Math.max(-this.maxSpeed, Math.min(this.maxSpeed, this.vx));
+
+                // Apply velocities
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Strict angular velocity clamp
+                this.angularVel = Math.max(-PHYSICS.MAX_ANGULAR_VEL, 
+                                           Math.min(PHYSICS.MAX_ANGULAR_VEL, this.angularVel));
+                
+                // Angular damping
+                this.angularVel *= 0.95;
+                this.angle += this.angularVel;
+
+                // Update distance
+                distance = Math.max(distance, Math.floor(this.x / 10));
+
+                // Collect coins
+                coins.forEach((coin, i) => {
+                    if (!coin.collected) {
+                        const dx = coin.x - this.x;
+                        const dy = coin.y - this.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 30) {
+                            coin.collected = true;
+                            coinsCollected++;
+                        }
+                    }
+                });
+
+                // Game over conditions
+                if (fuel <= 0 || this.angle > Math.PI / 2 || this.angle < -Math.PI / 2) {
+                    endGame();
+                }
+            }
+
+            getWheels() {
+                const cos = Math.cos(this.angle);
+                const sin = Math.sin(this.angle);
+                return [
+                    {
+                        x: this.x - cos * this.wheelBase / 2,
+                        y: this.y - sin * this.wheelBase / 2
+                    },
+                    {
+                        x: this.x + cos * this.wheelBase / 2,
+                        y: this.y + sin * this.wheelBase / 2
+                    }
+                ];
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x - camera.x, this.y - camera.y);
+                ctx.rotate(this.angle);
+
+                // Body
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+
+                // Wheels
+                const wheels = [
+                    { x: -this.wheelBase / 2, y: this.height / 2 },
+                    { x: this.wheelBase / 2, y: this.height / 2 }
+                ];
+                ctx.fillStyle = '#333';
+                wheels.forEach(wheel => {
+                    ctx.beginPath();
+                    ctx.arc(wheel.x, wheel.y, this.wheelRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                ctx.restore();
+            }
+        }
+
+        // Generate Terrain
+        function generateTerrain() {
+            terrain = [];
+            const mapConfig = maps[gameState.selectedMap];
+            const roughness = mapConfig.roughness;
+            let y = canvas.height / 2;
+            
+            for (let x = 0; x < 10000; x += 20) {
+                y += (Math.random() - 0.5) * 100 * roughness;
+                y = Math.max(200, Math.min(canvas.height - 100, y));
+                terrain.push({ x, y });
+            }
+        }
+
+        // Get Terrain Y at X
+        function getTerrainY(x) {
+            for (let i = 0; i < terrain.length - 1; i++) {
+                if (x >= terrain[i].x && x <= terrain[i + 1].x) {
+                    const t = (x - terrain[i].x) / (terrain[i + 1].x - terrain[i].x);
+                    return terrain[i].y + (terrain[i + 1].y - terrain[i].y) * t;
+                }
+            }
+            return canvas.height / 2;
+        }
+
+        // Generate Coins
+        function generateCoins() {
+            coins = [];
+            for (let i = 1; i < terrain.length - 1; i += 5) {
+                if (Math.random() > 0.7) {
+                    coins.push({
+                        x: terrain[i].x,
+                        y: terrain[i].y - 40,
+                        collected: false
+                    });
+                }
+            }
+        }
+
+        // Start Game
+        function startGame() {
+            gameRunning = true;
+            distance = 0;
+            fuel = 100 + gameState.upgrades.fuel * 20;
+            coinsCollected = 0;
+            
+            generateTerrain();
+            generateCoins();
+            car = new Car();
+            camera = { x: 0, y: 0 };
+            
+            showScreen('game');
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            gameLoop();
+        }
+
+        // Game Loop
+        function gameLoop() {
+            if (!gameRunning || gameState.paused) return;
+
+            // Update
+            car.update();
+
+            // Camera follows car
+            camera.x = car.x - canvas.width / 3;
+            camera.y = car.y - canvas.height / 2;
+
+            // Render
+            const mapConfig = maps[gameState.selectedMap];
+            
+            // Background
+            ctx.fillStyle = mapConfig.bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Terrain (with map-specific ground color)
+            ctx.fillStyle = mapConfig.groundColor;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            terrain.forEach(point => {
+                ctx.lineTo(point.x - camera.x, point.y - camera.y);
+            });
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+
+            // Terrain outline
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            terrain.forEach((point, i) => {
+                if (i === 0) ctx.moveTo(point.x - camera.x, point.y - camera.y);
+                else ctx.lineTo(point.x - camera.x, point.y - camera.y);
+            });
+            ctx.stroke();
+
+            // Coins
+            coins.forEach(coin => {
+                if (!coin.collected) {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(coin.x - camera.x, coin.y - camera.y, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#FFA500';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
+
+            // Car
+            car.draw();
+
+            // Update UI
+            document.getElementById('distanceText').textContent = distance;
+            document.getElementById('coinsText').textContent = coinsCollected;
+            document.getElementById('fuelText').textContent = Math.floor(fuel);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // End Game
+        function endGame() {
+            gameRunning = false;
+            gameState.coins += coinsCollected;
+            saveGame();
+            
+            document.getElementById('finalDistance').textContent = distance;
+            document.getElementById('coinsEarned').textContent = coinsCollected;
+            document.getElementById('totalCoins').textContent = gameState.coins;
+            showScreen('gameOver');
+        }
+
+        // Restart Game
+        function restartGame() {
+            startGame();
+        }
+
+        // Pause/Resume
+        function pauseGame() {
+            if (gameRunning) {
+                gameState.paused = true;
+                showScreen('pauseMenu');
+            }
+        }
+
+        function resumeGame() {
+            gameState.paused = false;
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            gameLoop();
+        }
+
+        function quitToMenu() {
+            gameRunning = false;
+            gameState.paused = false;
+            showScreen('mainMenu');
+        }
+
+        // Touch/Mouse Controls
+        function setupControls() {
+            const buttons = {
+                gasBtn: 'gas',
+                brakeBtn: 'brake',
+                jumpBtn: 'jump',
+                nitroBtn: 'nitro',
+                tiltUpBtn: 'tiltUp',
+                tiltDownBtn: 'tiltDown'
+            };
+
+            Object.keys(buttons).forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                const inputKey = buttons[btnId];
+
+                // Touch events
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    input[inputKey] = true;
+                    btn.classList.add('active');
+                });
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    input[inputKey] = false;
+                    btn.classList.remove('active');
+                });
+
+                // Mouse events
+                btn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    input[inputKey] = true;
+                    btn.classList.add('active');
+                });
+                btn.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    input[inputKey] = false;
+                    btn.classList.remove('active');
+                });
+                btn.addEventListener('mouseleave', (e) => {
+                    input[inputKey] = false;
+                    btn.classList.remove('active');
+                });
+            });
+
+            // Keyboard controls
+            window.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'ArrowUp':
+                    case 'w':
+                    case 'W':
+                        input.gas = true;
+                        document.getElementById('gasBtn').classList.add('active');
+                        e.preventDefault();
+                        break;
+                    case 'ArrowDown':
+                    case 's':
+                    case 'S':
+                        input.brake = true;
+                        document.getElementById('brakeBtn').classList.add('active');
+                        e.preventDefault();
+                        break;
+                    case ' ':
+                        input.jump = true;
+                        document.getElementById('jumpBtn').classList.add('active');
+                        e.preventDefault();
+                        break;
+                    case 'ArrowLeft':
+                    case 'a':
+                    case 'A':
+                        input.tiltUp = true;
+                        document.getElementById('tiltUpBtn').classList.add('active');
+                        e.preventDefault();
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                    case 'D':
+                        input.tiltDown = true;
+                        document.getElementById('tiltDownBtn').classList.add('active');
+                        e.preventDefault();
+                        break;
+                    case 'Shift':
+                        input.nitro = true;
+                        document.getElementById('nitroBtn').classList.add('active');
+                        e.preventDefault();
+                        break;
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                switch(e.key) {
+                    case 'ArrowUp':
+                    case 'w':
+                    case 'W':
+                        input.gas = false;
+                        document.getElementById('gasBtn').classList.remove('active');
+                        break;
+                    case 'ArrowDown':
+                    case 's':
+                    case 'S':
+                        input.brake = false;
+                        document.getElementById('brakeBtn').classList.remove('active');
+                        break;
+                    case ' ':
+                        input.jump = false;
+                        document.getElementById('jumpBtn').classList.remove('active');
+                        break;
+                    case 'ArrowLeft':
+                    case 'a':
+                    case 'A':
+                        input.tiltUp = false;
+                        document.getElementById('tiltUpBtn').classList.remove('active');
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                    case 'D':
+                        input.tiltDown = false;
+                        document.getElementById('tiltDownBtn').classList.remove('active');
+                        break;
+                    case 'Shift':
+                        input.nitro = false;
+                        document.getElementById('nitroBtn').classList.remove('active');
+                        break;
+                }
+            });
+        }
+
+        // Initialize
+        loadGame();
+        setupControls();
+    </script>
 </body>
 </html>
