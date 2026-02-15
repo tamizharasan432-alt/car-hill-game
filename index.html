@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<title>F1 Hill Climb Racing - Infinite Edition</title>
+<title>F1 Hill Climb Racing</title>
 <style>
 * {
   margin: 0;
@@ -16,7 +15,7 @@
 
 body {
   overflow: hidden;
-  font-family: 'Arial', sans-serif;
+  font-family: Arial, sans-serif;
   background: #000;
   touch-action: none;
   position: fixed;
@@ -26,7 +25,6 @@ body {
 
 canvas {
   display: block;
-  background: #87CEEB;
   touch-action: none;
 }
 
@@ -42,193 +40,94 @@ canvas {
 
 .hud {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 10px;
+  left: 10px;
   background: rgba(0, 0, 0, 0.8);
-  padding: 15px 20px;
-  border-radius: 12px;
+  padding: 10px 15px;
+  border-radius: 8px;
   color: white;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: bold;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
 }
 
 .hud-item {
-  margin: 8px 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.hud-icon {
-  font-size: 24px;
-}
-
-.hud-value {
-  color: #FFD700;
-  font-size: 20px;
+  margin: 5px 0;
 }
 
 .fuel-container {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 200px;
-}
-
-.fuel-label {
-  color: white;
-  font-weight: bold;
-  margin-bottom: 5px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  top: 10px;
+  right: 10px;
+  width: 150px;
 }
 
 .fuel-bar {
   width: 100%;
-  height: 30px;
-  background: rgba(0, 0, 0, 0.7);
-  border: 3px solid white;
-  border-radius: 15px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid white;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 .fuel-fill {
   height: 100%;
-  background: linear-gradient(to right, #ff4444, #ffaa00, #44ff44);
-  transition: width 0.3s ease;
-  position: relative;
-}
-
-.fuel-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  background: linear-gradient(to right, #f44, #fa0, #4f4);
+  transition: width 0.3s;
 }
 
 .fuel-fill.low {
-  animation: fuelFlash 0.5s infinite;
+  animation: flash 0.5s infinite;
 }
 
-@keyframes fuelFlash {
+@keyframes flash {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
 
-.fuel-warning {
-  position: absolute;
-  top: 70px;
-  right: 20px;
-  background: rgba(255, 68, 68, 0.9);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-weight: bold;
-  animation: warningPulse 1s infinite;
-  display: none;
-}
-
-.fuel-warning.show {
-  display: block;
-}
-
-@keyframes warningPulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.05); opacity: 0.8; }
-}
-
-.top-controls {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  pointer-events: auto;
-}
-
-.control-btn {
-  width: 50px;
-  height: 50px;
-  background: rgba(0, 0, 0, 0.7);
-  border: 3px solid white;
-  border-radius: 12px;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  backdrop-filter: blur(10px);
-}
-
-.control-btn:active {
-  transform: scale(0.95);
-  background: rgba(0, 0, 0, 0.9);
-}
-
 .speedometer {
   position: absolute;
-  bottom: 30px;
-  right: 30px;
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.95));
+  bottom: 150px;
+  right: 20px;
+  width: 80px;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.8);
   border-radius: 50%;
-  border: 4px solid #FFD700;
+  border: 3px solid #fd0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-  pointer-events: none;
+  color: #0f8;
+  font-weight: bold;
 }
 
 .speed-value {
-  font-size: 32px;
-  font-weight: bold;
-  color: #00ff88;
-  text-shadow: 0 0 10px #00ff88;
+  font-size: 24px;
 }
 
 .speed-unit {
-  font-size: 14px;
+  font-size: 10px;
   color: #aaa;
-  margin-top: -5px;
 }
 
 .speed-bars {
   position: absolute;
-  bottom: 180px;
-  right: 30px;
+  bottom: 240px;
+  right: 20px;
   display: flex;
-  gap: 5px;
-  pointer-events: none;
+  gap: 4px;
 }
 
 .speed-bar {
-  width: 8px;
-  height: 40px;
+  width: 6px;
+  height: 30px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  transition: background 0.2s;
+  border-radius: 3px;
 }
 
 .speed-bar.active {
-  background: linear-gradient(to top, #ff4444, #ffaa00, #44ff44);
-  box-shadow: 0 0 10px rgba(68, 255, 68, 0.5);
+  background: linear-gradient(to top, #f44, #fa0, #4f4);
 }
 
 .touch-controls {
@@ -236,19 +135,16 @@ canvas {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 200px;
-  display: none;
+  height: 150px;
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
   pointer-events: auto;
 }
 
-.touch-controls.show {
-  display: block;
-}
-
 .touch-btn {
-  position: absolute;
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   background: rgba(0, 0, 0, 0.6);
   border: 4px solid rgba(255, 255, 255, 0.8);
   border-radius: 50%;
@@ -257,97 +153,81 @@ canvas {
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 16px;
   font-weight: bold;
   user-select: none;
-  transition: all 0.1s;
-  backdrop-filter: blur(10px);
 }
 
 .touch-btn.active {
   background: rgba(76, 175, 80, 0.8);
   transform: scale(0.95);
-  border-color: #4CAF50;
 }
 
 .touch-btn-icon {
-  font-size: 36px;
-  margin-bottom: 5px;
+  font-size: 32px;
 }
 
-#accelBtn {
-  bottom: 40px;
-  right: 40px;
+.control-btn {
+  position: absolute;
+  top: 10px;
+  padding: 8px 15px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid white;
+  border-radius: 8px;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
-#brakeBtn {
-  bottom: 40px;
-  left: 40px;
-}
-
-#restartTouchBtn {
-  bottom: 40px;
+#pauseBtn {
   left: 50%;
   transform: translateX(-50%);
-  width: 100px;
-  height: 100px;
-  display: none;
 }
 
-.milestone {
+#qualityBtn {
+  right: 170px;
+}
+
+.game-over {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: linear-gradient(135deg, #FFD700, #FFA500);
-  color: #000;
-  padding: 25px 50px;
-  border-radius: 20px;
-  font-size: 32px;
-  font-weight: bold;
-  box-shadow: 0 10px 40px rgba(255, 215, 0, 0.6);
-  animation: milestoneAnim 2s ease-out forwards;
-  pointer-events: none;
-  z-index: 100;
-}
-
-@keyframes milestoneAnim {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
-  }
-  20% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.2);
-  }
-  80% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
-}
-
-.countdown {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 120px;
-  font-weight: bold;
+  background: rgba(0, 0, 0, 0.95);
+  padding: 30px 50px;
+  border-radius: 15px;
+  text-align: center;
   color: white;
-  text-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-  animation: countdownPulse 1s ease-out;
-  pointer-events: none;
-  z-index: 100;
+  display: none;
+  pointer-events: auto;
 }
 
-@keyframes countdownPulse {
-  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+.game-over.show {
+  display: block;
+}
+
+.game-over h1 {
+  font-size: 36px;
+  margin-bottom: 15px;
+  color: #f44;
+}
+
+.game-over p {
+  font-size: 20px;
+  margin: 8px 0;
+  color: #fd0;
+}
+
+.game-over button {
+  margin-top: 20px;
+  padding: 12px 30px;
+  font-size: 18px;
+  background: linear-gradient(135deg, #4CAF50, #388E3C);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
 .pause-overlay {
@@ -370,216 +250,47 @@ canvas {
 
 .pause-content {
   background: rgba(30, 30, 30, 0.95);
-  padding: 40px 60px;
-  border-radius: 20px;
+  padding: 30px 50px;
+  border-radius: 15px;
   text-align: center;
   color: white;
 }
 
 .pause-content h1 {
-  font-size: 48px;
-  margin-bottom: 30px;
+  font-size: 36px;
+  margin-bottom: 20px;
 }
 
 .pause-btn {
-  margin: 10px;
-  padding: 15px 40px;
-  font-size: 20px;
+  margin: 8px;
+  padding: 12px 30px;
+  font-size: 18px;
   background: linear-gradient(135deg, #4CAF50, #388E3C);
   color: white;
   border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  pointer-events: auto;
-}
-
-.pause-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
-}
-
-.settings-panel {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(30, 30, 30, 0.98);
-  padding: 30px;
-  border-radius: 20px;
-  color: white;
-  display: none;
-  pointer-events: auto;
-  z-index: 60;
-  max-width: 400px;
-  width: 90%;
-}
-
-.settings-panel.show {
-  display: block;
-}
-
-.settings-title {
-  font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.settings-item {
-  margin: 20px 0;
-}
-
-.settings-label {
-  font-size: 16px;
-  margin-bottom: 10px;
-  display: block;
-}
-
-.settings-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.settings-option {
-  flex: 1;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  color: white;
   cursor: pointer;
-  text-align: center;
-  transition: all 0.2s;
+  font-weight: bold;
 }
 
-.settings-option.active {
-  background: rgba(76, 175, 80, 0.5);
-  border-color: #4CAF50;
-}
-
-.settings-close {
-  margin-top: 20px;
+#error-display {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  padding: 12px;
-  background: #ff4444;
-  border: none;
-  border-radius: 8px;
+  padding: 10px;
+  background: rgba(255, 68, 68, 0.9);
   color: white;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.game-over {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.95);
-  padding: 40px 60px;
-  border-radius: 20px;
-  text-align: center;
-  color: white;
-  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+  font-family: monospace;
+  font-size: 12px;
   display: none;
-  pointer-events: auto;
+  z-index: 1000;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
-.game-over.show {
+#error-display.show {
   display: block;
-  animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-.game-over h1 {
-  font-size: 48px;
-  margin-bottom: 20px;
-  color: #ff4444;
-}
-
-.game-over p {
-  font-size: 24px;
-  margin: 10px 0;
-  color: #FFD700;
-}
-
-.game-over button {
-  margin-top: 30px;
-  padding: 15px 40px;
-  font-size: 20px;
-  background: linear-gradient(135deg, #4CAF50, #388E3C);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s ease;
-}
-
-.game-over button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
-}
-
-@media (max-width: 768px) {
-  .hud {
-    font-size: 14px;
-    padding: 10px 15px;
-  }
-  
-  .speedometer {
-    width: 90px;
-    height: 90px;
-    bottom: 180px;
-  }
-  
-  .speed-value {
-    font-size: 24px;
-  }
-  
-  .fuel-container {
-    width: 150px;
-  }
-  
-  .milestone {
-    font-size: 24px;
-    padding: 20px 40px;
-  }
-  
-  .countdown {
-    font-size: 80px;
-  }
-}
-
-@media (max-width: 480px) {
-  .hud {
-    font-size: 12px;
-    padding: 8px 12px;
-    top: 10px;
-    left: 10px;
-  }
-  
-  .fuel-container {
-    width: 120px;
-    top: 10px;
-    right: 10px;
-  }
-  
-  .top-controls {
-    top: 10px;
-  }
-  
-  .control-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-  }
 }
 </style>
 </head>
@@ -588,36 +299,20 @@ canvas {
 <canvas id="canvas"></canvas>
 
 <div id="ui">
-  <div class="top-controls">
-    <button class="control-btn" id="pauseBtn" title="Pause (P)">⏸️</button>
-    <button class="control-btn" id="settingsBtn" title="Settings">⚙️</button>
-    <button class="control-btn" id="muteBtn" title="Mute">🔊</button>
-    <button class="control-btn" id="fullscreenBtn" title="Fullscreen">⛶</button>
-  </div>
-
+  <button class="control-btn" id="pauseBtn">⏸️</button>
+  <button class="control-btn" id="qualityBtn">HQ</button>
+  
   <div class="hud">
-    <div class="hud-item">
-      <span class="hud-icon">📏</span>
-      <span>Distance: <span class="hud-value" id="distance">0</span>m</span>
-    </div>
-    <div class="hud-item">
-      <span class="hud-icon">💰</span>
-      <span>Coins: <span class="hud-value" id="coins">0</span></span>
-    </div>
-    <div class="hud-item">
-      <span class="hud-icon">🏆</span>
-      <span>Best: <span class="hud-value" id="best">0</span>m</span>
-    </div>
+    <div class="hud-item">📏 <span id="distance">0</span>m</div>
+    <div class="hud-item">💰 <span id="coins">0</span></div>
+    <div class="hud-item">🏆 <span id="best">0</span>m</div>
   </div>
 
   <div class="fuel-container">
-    <div class="fuel-label">⛽ Fuel</div>
     <div class="fuel-bar">
       <div class="fuel-fill" id="fuelFill"></div>
     </div>
   </div>
-
-  <div class="fuel-warning" id="fuelWarning">⚠️ LOW FUEL!</div>
 
   <div class="speedometer">
     <div class="speed-value" id="speedValue">0</div>
@@ -633,17 +328,13 @@ canvas {
   </div>
 
   <div class="touch-controls" id="touchControls">
-    <div class="touch-btn" id="accelBtn">
-      <div class="touch-btn-icon">⬆️</div>
-      <div>GAS</div>
-    </div>
     <div class="touch-btn" id="brakeBtn">
       <div class="touch-btn-icon">⬇️</div>
       <div>BRAKE</div>
     </div>
-    <div class="touch-btn" id="restartTouchBtn">
-      <div class="touch-btn-icon">🔄</div>
-      <div>RESTART</div>
+    <div class="touch-btn" id="accelBtn">
+      <div class="touch-btn-icon">⬆️</div>
+      <div>GAS</div>
     </div>
   </div>
 
@@ -655,44 +346,48 @@ canvas {
     </div>
   </div>
 
-  <div class="settings-panel" id="settingsPanel">
-    <div class="settings-title">⚙️ Settings</div>
-    
-    <div class="settings-item">
-      <div class="settings-label">Quality:</div>
-      <div class="settings-buttons">
-        <div class="settings-option" data-quality="low">LOW</div>
-        <div class="settings-option active" data-quality="high">HIGH</div>
-      </div>
-    </div>
-    
-    <div class="settings-item">
-      <div class="settings-label">Camera Smoothing:</div>
-      <div class="settings-buttons">
-        <div class="settings-option" data-camera="tight">TIGHT</div>
-        <div class="settings-option active" data-camera="normal">NORMAL</div>
-        <div class="settings-option" data-camera="loose">LOOSE</div>
-      </div>
-    </div>
-    
-    <button class="settings-close" id="settingsClose">Close</button>
-  </div>
-
   <div class="game-over" id="gameOver">
-    <h1 id="gameOverTitle">⛽ Game Over!</h1>
+    <h1 id="gameOverTitle">Game Over!</h1>
     <p>Distance: <span id="finalDistance">0</span>m</p>
     <p>Coins: <span id="finalCoins">0</span></p>
     <button id="restartBtn">🔄 Play Again</button>
   </div>
 </div>
 
+<div id="error-display"></div>
+
 <script>
+(function() {
+'use strict';
+
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (w < 2 * r) r = w / 2;
+    if (h < 2 * r) r = h / 2;
+    this.beginPath();
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    this.closePath();
+    return this;
+  };
+}
+
+window.onerror = function(msg, url, line, col, error) {
+  const errorDisplay = document.getElementById('error-display');
+  errorDisplay.textContent = 'Error: ' + msg + '\nLine: ' + line + '\n' + (error ? error.stack : '');
+  errorDisplay.classList.add('show');
+  return true;
+};
+
 const CONFIG = {
   GRAVITY: 0.8,
-  FRONT_WHEEL_RADIUS: 18,
-  REAR_WHEEL_RADIUS: 22,
-  CAR_WIDTH: 110,
-  CAR_HEIGHT: 35,
+  FRONT_WHEEL_RADIUS: 16,
+  REAR_WHEEL_RADIUS: 20,
+  CAR_WIDTH: 100,
+  CAR_HEIGHT: 30,
   ACCELERATION: 0.6,
   BRAKE_FORCE: 0.5,
   MAX_SPEED: 16,
@@ -702,128 +397,34 @@ const CONFIG = {
   MAX_FUEL: 100,
   FUEL_CONSUMPTION: 0.012,
   COIN_RADIUS: 12,
-  COIN_VALUE: 10,
   FUEL_PICKUP_VALUE: 25,
-  FLIP_ANGLE_THRESHOLD: 2.0,
+  FLIP_ANGLE_THRESHOLD: 2.1,
   FLIP_TIME_LIMIT: 1500,
-  OUT_OF_MAP_THRESHOLD: 1000,
-  CHUNK_SIZE: 20,
-  TERRAIN_WINDOW: 100
+  OUT_OF_MAP_THRESHOLD: 800,
+  CHUNK_SIZE: 30,
+  TERRAIN_WINDOW: 150
 };
 
 class Settings {
   constructor() {
     this.quality = localStorage.getItem('quality') || 'high';
-    this.camera = localStorage.getItem('camera') || 'normal';
-    this.muted = localStorage.getItem('muted') === 'true';
-    this.cameraValues = { tight: 0.15, normal: 0.08, loose: 0.04 };
   }
-  getCameraSmoothing() { return this.cameraValues[this.camera]; }
-  getParticleMultiplier() { return this.quality === 'high' ? 1 : 0.3; }
+  getParticleMultiplier() {
+    return this.quality === 'high' ? 1 : 0.3;
+  }
   save() {
     localStorage.setItem('quality', this.quality);
-    localStorage.setItem('camera', this.camera);
-    localStorage.setItem('muted', this.muted);
-  }
-}
-
-class AudioSystem {
-  constructor() {
-    this.context = null;
-    this.enabled = true;
-    this.engineGain = null;
-    this.engineOsc = null;
-    this.init();
-  }
-  init() {
-    try {
-      this.context = new (window.AudioContext || window.webkitAudioContext)();
-      this.engineGain = this.context.createGain();
-      this.engineGain.connect(this.context.destination);
-      this.engineGain.gain.value = 0;
-    } catch (e) {
-      this.enabled = false;
-    }
-  }
-  startEngine() {
-    if (!this.enabled || !this.context) return;
-    this.engineOsc = this.context.createOscillator();
-    this.engineOsc.type = 'sawtooth';
-    this.engineOsc.frequency.value = 80;
-    this.engineOsc.connect(this.engineGain);
-    this.engineOsc.start();
-  }
-  updateEngine(speed) {
-    if (!this.enabled || !this.engineOsc) return;
-    const freq = 80 + speed * 15;
-    const volume = Math.min(speed * 0.03, 0.15);
-    this.engineOsc.frequency.setTargetAtTime(freq, this.context.currentTime, 0.05);
-    this.engineGain.gain.setTargetAtTime(volume, this.context.currentTime, 0.1);
-  }
-  stopEngine() {
-    if (!this.enabled || !this.engineOsc) return;
-    this.engineGain.gain.setTargetAtTime(0, this.context.currentTime, 0.3);
-    setTimeout(() => {
-      if (this.engineOsc) {
-        this.engineOsc.stop();
-        this.engineOsc = null;
-      }
-    }, 500);
-  }
-  playCoin() {
-    if (!this.enabled || !this.context) return;
-    const osc = this.context.createOscillator();
-    const gain = this.context.createGain();
-    osc.connect(gain);
-    gain.connect(this.context.destination);
-    osc.frequency.value = 800;
-    osc.type = 'sine';
-    gain.gain.value = 0.2;
-    osc.start();
-    osc.frequency.exponentialRampToValueAtTime(1200, this.context.currentTime + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.15);
-    osc.stop(this.context.currentTime + 0.15);
-  }
-  playFuelPickup() {
-    if (!this.enabled || !this.context) return;
-    const osc = this.context.createOscillator();
-    const gain = this.context.createGain();
-    osc.connect(gain);
-    gain.connect(this.context.destination);
-    osc.frequency.value = 300;
-    osc.type = 'square';
-    gain.gain.value = 0.15;
-    osc.start();
-    osc.frequency.exponentialRampToValueAtTime(600, this.context.currentTime + 0.2);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.25);
-    osc.stop(this.context.currentTime + 0.25);
-  }
-  playLand() {
-    if (!this.enabled || !this.context) return;
-    const osc = this.context.createOscillator();
-    const gain = this.context.createGain();
-    osc.connect(gain);
-    gain.connect(this.context.destination);
-    osc.frequency.value = 150;
-    osc.type = 'sawtooth';
-    gain.gain.value = 0.1;
-    osc.start();
-    osc.frequency.exponentialRampToValueAtTime(50, this.context.currentTime + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.15);
-    osc.stop(this.context.currentTime + 0.15);
   }
 }
 
 class Random {
-  constructor(seed) { this.seed = seed; }
+  constructor(seed) {
+    this.seed = seed;
+  }
   next() {
     this.seed = (this.seed * 9301 + 49297) % 233280;
     return this.seed / 233280;
   }
-}
-
-function vibrate(duration) {
-  if (navigator.vibrate) navigator.vibrate(duration);
 }
 
 class ParticleSystem {
@@ -831,7 +432,8 @@ class ParticleSystem {
     this.particles = [];
     this.settings = settings;
   }
-  emit(x, y, count, type = 'dust') {
+  emit(x, y, count, type) {
+    type = type || 'dust';
     const multiplier = this.settings.getParticleMultiplier();
     count = Math.ceil(count * multiplier);
     for (let i = 0; i < count; i++) {
@@ -841,10 +443,8 @@ class ParticleSystem {
         vx: (Math.random() - 0.5) * (type === 'spark' ? 8 : 4),
         vy: -Math.random() * (type === 'spark' ? 6 : 3),
         life: 1,
-        maxLife: type === 'spark' ? 0.5 : 1,
         size: type === 'spark' ? 3 + Math.random() * 2 : 2 + Math.random() * 4,
-        type: type,
-        color: type === 'spark' ? `hsl(${30 + Math.random() * 30}, 100%, 60%)` : 'rgba(139, 115, 85, 0.8)'
+        type: type
       });
     }
   }
@@ -861,13 +461,12 @@ class ParticleSystem {
   render(ctx, camera) {
     ctx.save();
     ctx.translate(-camera.x, -camera.y);
-    this.particles.forEach(p => {
-      const alpha = p.life / p.maxLife;
+    this.particles.forEach(function(p) {
+      const alpha = p.life;
       if (p.type === 'spark') {
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = alpha;
+        ctx.fillStyle = 'rgba(255, 150, 50, ' + alpha + ')';
       } else {
-        ctx.fillStyle = `rgba(139, 115, 85, ${alpha * 0.8})`;
+        ctx.fillStyle = 'rgba(139, 115, 85, ' + (alpha * 0.8) + ')';
       }
       ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
     });
@@ -875,97 +474,19 @@ class ParticleSystem {
   }
 }
 
-class CloudSystem {
-  constructor(canvasWidth, canvasHeight) {
-    this.clouds = [];
-    this.generateClouds(canvasWidth, canvasHeight);
-  }
-  generateClouds(width, height) {
-    const rng = new Random(54321);
-    for (let i = 0; i < 12; i++) {
-      this.clouds.push({
-        x: rng.next() * width * 3,
-        y: rng.next() * height * 0.4 + 50,
-        size: 50 + rng.next() * 80,
-        speed: 0.08 + rng.next() * 0.15,
-        opacity: 0.6 + rng.next() * 0.3
-      });
-    }
-  }
-  update(camera, canvasWidth) {
-    this.clouds.forEach(cloud => {
-      cloud.x += cloud.speed;
-      if (cloud.x > camera.x + canvasWidth + 200) {
-        cloud.x = camera.x - 200;
-      }
-    });
-  }
-  render(ctx, camera) {
-    ctx.save();
-    ctx.translate(-camera.x * 0.3, 0);
-    this.clouds.forEach(cloud => {
-      ctx.fillStyle = `rgba(255, 255, 255, ${cloud.opacity})`;
-      ctx.beginPath();
-      ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
-      ctx.arc(cloud.x + cloud.size * 0.7, cloud.y, cloud.size * 0.8, 0, Math.PI * 2);
-      ctx.arc(cloud.x + cloud.size * 1.4, cloud.y, cloud.size * 0.6, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    ctx.restore();
-  }
-}
-
-class ParallaxBackground {
-  constructor(canvasWidth, canvasHeight) {
-    this.mountains = [];
-    this.generateMountains(canvasWidth, canvasHeight);
-  }
-  generateMountains(width, height) {
-    const rng = new Random(11111);
-    for (let i = 0; i < 8; i++) {
-      const baseY = height * 0.6;
-      const peaks = [];
-      for (let j = 0; j < 5; j++) {
-        peaks.push({
-          x: (i * width / 4) + (j * width / 20),
-          y: baseY - rng.next() * 150
-        });
-      }
-      this.mountains.push({ peaks, opacity: 0.3 + rng.next() * 0.2 });
-    }
-  }
-  render(ctx, camera, canvasHeight) {
-    ctx.save();
-    ctx.translate(-camera.x * 0.15, 0);
-    this.mountains.forEach(mountain => {
-      ctx.fillStyle = `rgba(60, 60, 80, ${mountain.opacity})`;
-      ctx.beginPath();
-      ctx.moveTo(mountain.peaks[0].x, canvasHeight);
-      mountain.peaks.forEach(peak => {
-        ctx.lineTo(peak.x, peak.y);
-      });
-      ctx.lineTo(mountain.peaks[mountain.peaks.length - 1].x + 200, canvasHeight);
-      ctx.closePath();
-      ctx.fill();
-    });
-    ctx.restore();
-  }
-}
-
 class InfiniteTerrain {
   constructor() {
-    this.chunks = new Map();
-    this.rng = new Random(12345);
+    this.chunks = {};
+    this.baseY = 400;
   }
-  getChunkKey(chunkIndex) {
-    return chunkIndex;
+  getChunkIndex(x) {
+    return Math.floor(x / (CONFIG.CHUNK_SIZE * CONFIG.TERRAIN_SEGMENT));
   }
   generateChunk(chunkIndex) {
+    if (this.chunks[chunkIndex]) return;
     const points = [];
-    const baseY = 400;
     const startX = chunkIndex * CONFIG.CHUNK_SIZE * CONFIG.TERRAIN_SEGMENT;
     const rng = new Random(12345 + chunkIndex * 1000);
-    
     for (let i = 0; i < CONFIG.CHUNK_SIZE; i++) {
       const globalIndex = chunkIndex * CONFIG.CHUNK_SIZE + i;
       const x = startX + i * CONFIG.TERRAIN_SEGMENT;
@@ -973,5 +494,608 @@ class InfiniteTerrain {
       const wave2 = Math.sin(globalIndex * 0.06) * 70;
       const wave3 = Math.cos(globalIndex * 0.1) * 45;
       const noise = (rng.next() - 0.5) * 30;
-      const y = baseY + wave1 + wave2 + wave3 + noise;
-      points.push({ x, y
+      const y = this.baseY + wave1 + wave2 + wave3 + noise;
+      points.push({ x: x, y: y });
+    }
+    this.chunks[chunkIndex] = points;
+  }
+  cleanup(cameraX) {
+    const currentChunk = this.getChunkIndex(cameraX);
+    const keys = Object.keys(this.chunks);
+    for (let i = 0; i < keys.length; i++) {
+      const key = parseInt(keys[i]);
+      if (key < currentChunk - 5) {
+        delete this.chunks[key];
+      }
+    }
+  }
+  ensureChunks(cameraX) {
+    const currentChunk = this.getChunkIndex(cameraX);
+    for (let i = currentChunk - 2; i <= currentChunk + 3; i++) {
+      this.generateChunk(i);
+    }
+  }
+  getY(x) {
+    const chunkIndex = this.getChunkIndex(x);
+    const chunk = this.chunks[chunkIndex];
+    if (!chunk) return this.baseY;
+    const localX = x - chunkIndex * CONFIG.CHUNK_SIZE * CONFIG.TERRAIN_SEGMENT;
+    const index = Math.floor(localX / CONFIG.TERRAIN_SEGMENT);
+    if (index < 0) return chunk[0] ? chunk[0].y : this.baseY;
+    if (index >= chunk.length - 1) return chunk[chunk.length - 1] ? chunk[chunk.length - 1].y : this.baseY;
+    const p1 = chunk[index];
+    const p2 = chunk[index + 1];
+    if (!p1 || !p2) return this.baseY;
+    const t = (localX - index * CONFIG.TERRAIN_SEGMENT) / CONFIG.TERRAIN_SEGMENT;
+    return p1.y + (p2.y - p1.y) * t;
+  }
+  getAngle(x) {
+    const chunkIndex = this.getChunkIndex(x);
+    const chunk = this.chunks[chunkIndex];
+    if (!chunk) return 0;
+    const localX = x - chunkIndex * CONFIG.CHUNK_SIZE * CONFIG.TERRAIN_SEGMENT;
+    const index = Math.floor(localX / CONFIG.TERRAIN_SEGMENT);
+    if (index < 0 || index >= chunk.length - 1) return 0;
+    const p1 = chunk[index];
+    const p2 = chunk[index + 1];
+    if (!p1 || !p2) return 0;
+    return Math.atan2(p2.y - p1.y, p2.x - p1.x);
+  }
+  render(ctx, camera, canvasHeight) {
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+    ctx.fillStyle = '#6b8e23';
+    ctx.strokeStyle = '#556b2f';
+    ctx.lineWidth = 5;
+    const keys = Object.keys(this.chunks).sort(function(a, b) { return parseInt(a) - parseInt(b); });
+    ctx.beginPath();
+    let started = false;
+    for (let k = 0; k < keys.length; k++) {
+      const chunk = this.chunks[keys[k]];
+      for (let i = 0; i < chunk.length; i++) {
+        const point = chunk[i];
+        if (!started) {
+          ctx.moveTo(point.x, canvasHeight + camera.y + 1000);
+          ctx.lineTo(point.x, point.y);
+          started = true;
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      }
+    }
+    if (keys.length > 0) {
+      const lastChunk = this.chunks[keys[keys.length - 1]];
+      const lastPoint = lastChunk[lastChunk.length - 1];
+      ctx.lineTo(lastPoint.x, canvasHeight + camera.y + 1000);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+class InfiniteCollectibles {
+  constructor() {
+    this.coins = {};
+    this.fuelPickups = {};
+  }
+  getChunkIndex(x) {
+    return Math.floor(x / (CONFIG.CHUNK_SIZE * CONFIG.TERRAIN_SEGMENT));
+  }
+  generateChunk(chunkIndex, terrain) {
+    if (this.coins[chunkIndex] && this.fuelPickups[chunkIndex]) return;
+    const rng = new Random(98765 + chunkIndex * 2000);
+    const coins = [];
+    const fuelPickups = [];
+    const startIndex = chunkIndex * CONFIG.CHUNK_SIZE;
+    for (let i = 0; i < CONFIG.CHUNK_SIZE; i += 5) {
+      if (rng.next() > 0.4) {
+        const x = (startIndex + i) * CONFIG.TERRAIN_SEGMENT;
+        const y = terrain.getY(x) - 80;
+        coins.push({ x: x, y: y, collected: false, rotation: 0 });
+      }
+    }
+    for (let i = 0; i < CONFIG.CHUNK_SIZE; i += 15) {
+      if (rng.next() > 0.6) {
+        const x = (startIndex + i) * CONFIG.TERRAIN_SEGMENT;
+        const y = terrain.getY(x) - 70;
+        fuelPickups.push({ x: x, y: y, collected: false, pulse: 0 });
+      }
+    }
+    this.coins[chunkIndex] = coins;
+    this.fuelPickups[chunkIndex] = fuelPickups;
+  }
+  cleanup(cameraX) {
+    const currentChunk = this.getChunkIndex(cameraX);
+    const coinKeys = Object.keys(this.coins);
+    for (let i = 0; i < coinKeys.length; i++) {
+      const key = parseInt(coinKeys[i]);
+      if (key < currentChunk - 5) {
+        delete this.coins[key];
+      }
+    }
+    const fuelKeys = Object.keys(this.fuelPickups);
+    for (let i = 0; i < fuelKeys.length; i++) {
+      const key = parseInt(fuelKeys[i]);
+      if (key < currentChunk - 5) {
+        delete this.fuelPickups[key];
+      }
+    }
+  }
+  ensureChunks(cameraX, terrain) {
+    const currentChunk = this.getChunkIndex(cameraX);
+    for (let i = currentChunk - 2; i <= currentChunk + 3; i++) {
+      this.generateChunk(i, terrain);
+    }
+  }
+  update() {
+    const coinKeys = Object.keys(this.coins);
+    for (let k = 0; k < coinKeys.length; k++) {
+      const coins = this.coins[coinKeys[k]];
+      for (let i = 0; i < coins.length; i++) {
+        if (!coins[i].collected) {
+          coins[i].rotation += 0.1;
+        }
+      }
+    }
+    const fuelKeys = Object.keys(this.fuelPickups);
+    for (let k = 0; k < fuelKeys.length; k++) {
+      const fuels = this.fuelPickups[fuelKeys[k]];
+      for (let i = 0; i < fuels.length; i++) {
+        if (!fuels[i].collected) {
+          fuels[i].pulse += 0.1;
+        }
+      }
+    }
+  }
+  checkCollisions(car) {
+    let coinsCollected = 0;
+    let fuelCollected = 0;
+    const coinKeys = Object.keys(this.coins);
+    for (let k = 0; k < coinKeys.length; k++) {
+      const coins = this.coins[coinKeys[k]];
+      for (let i = 0; i < coins.length; i++) {
+        const coin = coins[i];
+        if (!coin.collected) {
+          const dx = car.x - coin.x;
+          const dy = car.y - coin.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < CONFIG.CAR_WIDTH / 2 + CONFIG.COIN_RADIUS) {
+            coin.collected = true;
+            coinsCollected++;
+          }
+        }
+      }
+    }
+    const fuelKeys = Object.keys(this.fuelPickups);
+    for (let k = 0; k < fuelKeys.length; k++) {
+      const fuels = this.fuelPickups[fuelKeys[k]];
+      for (let i = 0; i < fuels.length; i++) {
+        const fuel = fuels[i];
+        if (!fuel.collected) {
+          const dx = car.x - fuel.x;
+          const dy = car.y - fuel.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < CONFIG.CAR_WIDTH / 2 + 20) {
+            fuel.collected = true;
+            fuelCollected++;
+          }
+        }
+      }
+    }
+    return { coinsCollected: coinsCollected, fuelCollected: fuelCollected };
+  }
+  render(ctx, camera) {
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+    const coinKeys = Object.keys(this.coins);
+    for (let k = 0; k < coinKeys.length; k++) {
+      const coins = this.coins[coinKeys[k]];
+      for (let i = 0; i < coins.length; i++) {
+        const coin = coins[i];
+        if (!coin.collected) {
+          ctx.save();
+          ctx.translate(coin.x, coin.y);
+          ctx.rotate(coin.rotation);
+          ctx.fillStyle = '#FFD700';
+          ctx.strokeStyle = '#FFA500';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, 0, CONFIG.COIN_RADIUS, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+    const fuelKeys = Object.keys(this.fuelPickups);
+    for (let k = 0; k < fuelKeys.length; k++) {
+      const fuels = this.fuelPickups[fuelKeys[k]];
+      for (let i = 0; i < fuels.length; i++) {
+        const fuel = fuels[i];
+        if (!fuel.collected) {
+          ctx.save();
+          ctx.translate(fuel.x, fuel.y);
+          const scale = 1 + Math.sin(fuel.pulse) * 0.1;
+          ctx.scale(scale, scale);
+          ctx.fillStyle = '#ff4444';
+          ctx.strokeStyle = '#cc0000';
+          ctx.lineWidth = 3;
+          ctx.fillRect(-15, -20, 30, 40);
+          ctx.strokeRect(-15, -20, 30, 40);
+          ctx.fillStyle = '#333';
+          ctx.fillRect(-5, -25, 10, 8);
+          ctx.restore();
+        }
+      }
+    }
+    ctx.restore();
+  }
+}
+
+class F1Car {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.vx = 0;
+    this.vy = 0;
+    this.angle = 0;
+    this.angularVel = 0;
+    this.wheelAngle = 0;
+    this.leftSuspension = 0;
+    this.rightSuspension = 0;
+    this.fuel = CONFIG.MAX_FUEL;
+    this.tiltOffset = 0;
+    this.flippedTime = 0;
+    this.onGround = false;
+  }
+  update(terrain, keys, particleSystem) {
+    const accelerating = keys['ArrowUp'] || keys['w'] || keys['W'] || keys['accel'];
+    const braking = keys['ArrowDown'] || keys['s'] || keys['S'] || keys['brake'];
+    if (accelerating && this.fuel > 0) {
+      this.vx += CONFIG.ACCELERATION;
+      this.fuel -= CONFIG.FUEL_CONSUMPTION;
+      this.tiltOffset = Math.min(this.tiltOffset + 0.02, 0.15);
+    } else {
+      this.tiltOffset = Math.max(this.tiltOffset - 0.02, 0);
+    }
+    if (braking) {
+      this.vx -= CONFIG.BRAKE_FORCE;
+      this.tiltOffset = Math.max(this.tiltOffset - 0.02, -0.15);
+    }
+    this.fuel = Math.max(0, this.fuel);
+    this.vx = Math.max(-CONFIG.MAX_SPEED, Math.min(CONFIG.MAX_SPEED, this.vx));
+    this.vx *= 0.985;
+    this.vy += CONFIG.GRAVITY;
+    this.x += this.vx;
+    this.y += this.vy;
+    const cos = Math.cos(this.angle);
+    const sin = Math.sin(this.angle);
+    const wheelLeftX = this.x + cos * (-CONFIG.CAR_WIDTH / 2.5) - sin * (CONFIG.CAR_HEIGHT / 2);
+    const wheelLeftY = this.y + sin * (-CONFIG.CAR_WIDTH / 2.5) + cos * (CONFIG.CAR_HEIGHT / 2);
+    const wheelRightX = this.x + cos * (CONFIG.CAR_WIDTH / 2.5) - sin * (CONFIG.CAR_HEIGHT / 2);
+    const wheelRightY = this.y + sin * (CONFIG.CAR_WIDTH / 2.5) + cos * (CONFIG.CAR_HEIGHT / 2);
+    const groundLeftY = terrain.getY(wheelLeftX);
+    const groundRightY = terrain.getY(wheelRightX);
+    const leftContact = wheelLeftY + CONFIG.FRONT_WHEEL_RADIUS > groundLeftY;
+    const rightContact = wheelRightY + CONFIG.REAR_WHEEL_RADIUS > groundRightY;
+    const wasOnGround = this.onGround;
+    this.onGround = leftContact || rightContact;
+    if (!wasOnGround && this.onGround && this.vy > 8) {
+      particleSystem.emit(this.x, this.y + CONFIG.CAR_HEIGHT / 2, 15, 'dust');
+      particleSystem.emit(this.x, this.y + CONFIG.CAR_HEIGHT / 2, 8, 'spark');
+    }
+    this.leftSuspension *= 0.85;
+    this.rightSuspension *= 0.85;
+    if (leftContact) {
+      const penetration = (wheelLeftY + CONFIG.FRONT_WHEEL_RADIUS) - groundLeftY;
+      this.leftSuspension = penetration;
+      const force = penetration * CONFIG.SUSPENSION_STRENGTH;
+      this.vy -= force;
+      this.vy *= CONFIG.SUSPENSION_DAMPING;
+      this.angularVel += force * 0.02;
+    }
+    if (rightContact) {
+      const penetration = (wheelRightY + CONFIG.REAR_WHEEL_RADIUS) - groundRightY;
+      this.rightSuspension = penetration;
+      const force = penetration * CONFIG.SUSPENSION_STRENGTH;
+      this.vy -= force;
+      this.vy *= CONFIG.SUSPENSION_DAMPING;
+      this.angularVel -= force * 0.02;
+    }
+    if (this.onGround) {
+      const targetAngle = terrain.getAngle(this.x);
+      this.angle += (targetAngle - this.angle) * 0.15;
+    }
+    this.angle += this.angularVel;
+    this.angularVel *= 0.92;
+    this.wheelAngle += this.vx * 0.15;
+  }
+  isFlipped() {
+    const normalizedAngle = ((this.angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    return normalizedAngle > CONFIG.FLIP_ANGLE_THRESHOLD && normalizedAngle < (Math.PI * 2 - CONFIG.FLIP_ANGLE_THRESHOLD);
+  }
+  getSpeed() {
+    return Math.abs(this.vx);
+  }
+  render(ctx, camera, terrain, quality) {
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+    const shadowY = terrain.getY(this.x);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(this.x, shadowY, CONFIG.CAR_WIDTH * 0.6, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (quality === 'high' && this.vx > 8) {
+      ctx.globalAlpha = 0.3;
+      ctx.save();
+      ctx.translate(this.x - this.vx * 2, this.y);
+      ctx.rotate(this.angle + this.tiltOffset);
+      this.renderF1Body(ctx);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    }
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle + this.tiltOffset);
+    this.renderF1Body(ctx);
+    ctx.restore();
+    this.renderWheel(ctx, this.x, this.y, this.angle, -CONFIG.CAR_WIDTH / 2.5, this.leftSuspension, CONFIG.FRONT_WHEEL_RADIUS);
+    this.renderWheel(ctx, this.x, this.y, this.angle, CONFIG.CAR_WIDTH / 2.5, this.rightSuspension, CONFIG.REAR_WHEEL_RADIUS);
+    ctx.restore();
+  }
+  renderF1Body(ctx) {
+    ctx.fillStyle = '#cc0000';
+    ctx.strokeStyle = '#990000';
+    ctx.lineWidth = 3;
+    ctx.fillRect(-CONFIG.CAR_WIDTH / 2, -CONFIG.CAR_HEIGHT / 2, CONFIG.CAR_WIDTH, CONFIG.CAR_HEIGHT);
+    ctx.strokeRect(-CONFIG.CAR_WIDTH / 2, -CONFIG.CAR_HEIGHT / 2, CONFIG.CAR_WIDTH, CONFIG.CAR_HEIGHT);
+    ctx.fillStyle = '#222';
+    ctx.fillRect(-20, -CONFIG.CAR_HEIGHT / 2 + 5, 40, 15);
+    ctx.fillStyle = '#111';
+    ctx.fillRect(-CONFIG.CAR_WIDTH / 2, -CONFIG.CAR_HEIGHT / 2 - 8, 25, 5);
+    ctx.fillRect(CONFIG.CAR_WIDTH / 2 - 25, -CONFIG.CAR_HEIGHT / 2 - 8, 25, 5);
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-CONFIG.CAR_WIDTH / 2.5, CONFIG.CAR_HEIGHT / 2);
+    ctx.lineTo(-CONFIG.CAR_WIDTH / 2.5, CONFIG.CAR_HEIGHT / 2 + 10);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(CONFIG.CAR_WIDTH / 2.5, CONFIG.CAR_HEIGHT / 2);
+    ctx.lineTo(CONFIG.CAR_WIDTH / 2.5, CONFIG.CAR_HEIGHT / 2 + 10);
+    ctx.stroke();
+  }
+  renderWheel(ctx, carX, carY, carAngle, offset, suspension, radius) {
+    const cos = Math.cos(carAngle);
+    const sin = Math.sin(carAngle);
+    const wheelX = carX + cos * offset - sin * (CONFIG.CAR_HEIGHT / 2);
+    const wheelY = carY + sin * offset + cos * (CONFIG.CAR_HEIGHT / 2) + suspension * 0.5;
+    ctx.save();
+    ctx.translate(wheelX, wheelY);
+    ctx.rotate(this.wheelAngle);
+    ctx.fillStyle = '#222';
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#777';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(angle) * (radius - 4), Math.sin(angle) * (radius - 4));
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#444';
+    ctx.beginPath();
+    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+class Game {
+  constructor() {
+    this.canvas = document.getElementById('canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.settings = new Settings();
+    this.resize();
+    window.addEventListener('resize', this.resize.bind(this));
+    window.addEventListener('orientationchange', function() {
+      setTimeout(this.resize.bind(this), 100);
+    }.bind(this));
+    this.keys = {};
+    this.paused = false;
+    this.setupControls();
+    this.init();
+    this.animate();
+  }
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+  setupControls() {
+    var self = this;
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'p' || e.key === 'P') {
+        self.togglePause();
+        return;
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        self.restart();
+        return;
+      }
+      self.keys[e.key] = true;
+    });
+    window.addEventListener('keyup', function(e) {
+      self.keys[e.key] = false;
+    });
+    var setupTouchButton = function(btn, keyName) {
+      btn.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        self.keys[keyName] = true;
+        btn.classList.add('active');
+      });
+      btn.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        self.keys[keyName] = false;
+        btn.classList.remove('active');
+      });
+      btn.addEventListener('touchcancel', function(e) {
+        e.preventDefault();
+        self.keys[keyName] = false;
+        btn.classList.remove('active');
+      });
+    };
+    setupTouchButton(document.getElementById('accelBtn'), 'accel');
+    setupTouchButton(document.getElementById('brakeBtn'), 'brake');
+    document.getElementById('pauseBtn').addEventListener('click', function() {
+      self.togglePause();
+    });
+    document.getElementById('resumeBtn').addEventListener('click', function() {
+      self.togglePause();
+    });
+    document.getElementById('restartBtn').addEventListener('click', function() {
+      self.restart();
+    });
+    document.getElementById('restartPauseBtn').addEventListener('click', function() {
+      self.togglePause();
+      self.restart();
+    });
+    document.getElementById('qualityBtn').addEventListener('click', function() {
+      self.settings.quality = self.settings.quality === 'high' ? 'low' : 'high';
+      self.settings.save();
+      this.textContent = self.settings.quality === 'high' ? 'HQ' : 'LQ';
+    });
+  }
+  togglePause() {
+    if (this.gameOver) return;
+    this.paused = !this.paused;
+    document.getElementById('pauseOverlay').classList.toggle('show', this.paused);
+  }
+  restart() {
+    this.init();
+    document.getElementById('gameOver').classList.remove('show');
+    document.getElementById('pauseOverlay').classList.remove('show');
+    this.paused = false;
+  }
+  init() {
+    this.terrain = new InfiniteTerrain();
+    this.car = new F1Car(300, 200);
+    this.collectibles = new InfiniteCollectibles();
+    this.particleSystem = new ParticleSystem(this.settings);
+    this.camera = { x: 0, y: 0 };
+    this.distance = 0;
+    this.coins = 0;
+    this.bestDistance = parseInt(localStorage.getItem('f1BestDistance') || '0');
+    this.gameOver = false;
+    this.gameOverReason = '';
+    this.flipStartTime = 0;
+    this.updateUI();
+  }
+  update() {
+    if (this.paused || this.gameOver) return;
+    this.car.update(this.terrain, this.keys, this.particleSystem);
+    this.particleSystem.update();
+    this.terrain.ensureChunks(this.camera.x);
+    this.terrain.cleanup(this.camera.x);
+    this.collectibles.ensureChunks(this.camera.x, this.terrain);
+    this.collectibles.cleanup(this.camera.x);
+    this.collectibles.update();
+    var result = this.collectibles.checkCollisions(this.car);
+    if (result.coinsCollected > 0) {
+      this.coins += result.coinsCollected;
+      this.car.fuel = Math.min(CONFIG.MAX_FUEL, this.car.fuel + result.coinsCollected * 2);
+    }
+    if (result.fuelCollected > 0) {
+      this.car.fuel = Math.min(CONFIG.MAX_FUEL, this.car.fuel + CONFIG.FUEL_PICKUP_VALUE);
+    }
+    this.camera.x += (this.car.x - this.canvas.width * 0.35 - this.camera.x) * 0.08;
+    this.camera.y += (this.car.y - this.canvas.height * 0.55 - this.camera.y) * 0.08;
+    this.distance = Math.max(this.distance, Math.floor(this.car.x / 10));
+    if (this.distance > this.bestDistance) {
+      this.bestDistance = this.distance;
+      localStorage.setItem('f1BestDistance', this.bestDistance);
+    }
+    if (this.car.fuel <= 0 && Math.abs(this.car.vx) < 0.1) {
+      this.endGame('⛽ Out of Fuel!');
+    }
+    if (this.car.isFlipped()) {
+      if (this.flipStartTime === 0) {
+        this.flipStartTime = Date.now();
+      } else if (Date.now() - this.flipStartTime > CONFIG.FLIP_TIME_LIMIT) {
+        this.endGame('💥 Crashed!');
+      }
+    } else {
+      this.flipStartTime = 0;
+    }
+    if (this.car.y > this.camera.y + this.canvas.height + CONFIG.OUT_OF_MAP_THRESHOLD) {
+      this.endGame('🗺️ Out of Map!');
+    }
+    this.updateUI();
+  }
+  updateUI() {
+    document.getElementById('distance').textContent = this.distance;
+    document.getElementById('coins').textContent = this.coins;
+    document.getElementById('best').textContent = this.bestDistance;
+    var fuelPercent = (this.car.fuel / CONFIG.MAX_FUEL) * 100;
+    var fuelFill = document.getElementById('fuelFill');
+    fuelFill.style.width = fuelPercent + '%';
+    if (fuelPercent < 20) {
+      fuelFill.classList.add('low');
+    } else {
+      fuelFill.classList.remove('low');
+    }
+    var speed = Math.round(this.car.getSpeed() * 10);
+    document.getElementById('speedValue').textContent = speed;
+    var bars = document.querySelectorAll('.speed-bar');
+    var activeCount = Math.min(5, Math.floor((speed / 160) * 5));
+    for (var i = 0; i < bars.length; i++) {
+      if (i < activeCount) {
+        bars[i].classList.add('active');
+      } else {
+        bars[i].classList.remove('active');
+      }
+    }
+  }
+  endGame(reason) {
+    this.gameOver = true;
+    this.gameOverReason = reason;
+    document.getElementById('gameOverTitle').textContent = reason;
+    document.getElementById('finalDistance').textContent = this.distance;
+    document.getElementById('finalCoins').textContent = this.coins;
+    document.getElementById('gameOver').classList.add('show');
+  }
+  render() {
+    var gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+    gradient.addColorStop(0, '#1e3a5f');
+    gradient.addColorStop(0.5, '#5a7ba6');
+    gradient.addColorStop(1, '#87CEEB');
+    this.ctx.fillStyle = gradient;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.terrain.render(this.ctx, this.camera, this.canvas.height);
+    this.collectibles.render(this.ctx, this.camera);
+    this.particleSystem.render(this.ctx, this.camera);
+    this.car.render(this.ctx, this.camera, this.terrain, this.settings.quality);
+  }
+  animate() {
+    this.update();
+    this.render();
+    requestAnimationFrame(this.animate.bind(this));
+  }
+}
+
+window.addEventListener('load', function() {
+  new Game();
+});
+
+})();
+</script>
+
+</body>
+</html>
