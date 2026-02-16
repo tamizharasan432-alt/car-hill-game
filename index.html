@@ -289,7 +289,7 @@ canvas.show {
 
 .speedometer {
   position: absolute;
-  bottom: calc(180px + env(safe-area-inset-bottom));
+  bottom: calc(200px + env(safe-area-inset-bottom));
   right: 20px;
   width: 80px;
   height: 80px;
@@ -318,7 +318,7 @@ canvas.show {
   bottom: 0;
   left: 0;
   right: 0;
-  height: calc(200px + env(safe-area-inset-bottom));
+  height: calc(220px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   pointer-events: auto;
   display: none;
@@ -331,37 +331,36 @@ canvas.show {
 .touch-left {
   position: absolute;
   left: 15px;
-  bottom: calc(20px + env(safe-area-inset-bottom));
+  bottom: calc(15px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
 .touch-right {
   position: absolute;
   right: 15px;
-  bottom: calc(20px + env(safe-area-inset-bottom));
+  bottom: calc(15px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
   align-items: flex-end;
 }
 
 .touch-tilt {
   position: absolute;
-  left: 15px;
-  top: 40%;
-  transform: translateY(-50%);
+  left: 110px;
+  bottom: calc(35% + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .touch-btn {
-  width: 80px;
-  height: 80px;
-  background: rgba(0,0,0,0.6);
-  border: 3px solid rgba(255,255,255,0.8);
+  width: 75px;
+  height: 75px;
+  background: rgba(0,0,0,0.7);
+  border: 3px solid rgba(255,255,255,0.9);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -371,28 +370,33 @@ canvas.show {
   font-weight: bold;
   user-select: none;
   font-size: 11px;
-  transition: all 0.1s;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px);
 }
 
 .touch-btn.small {
   width: 55px;
   height: 55px;
   font-size: 9px;
+  border-width: 2px;
 }
 
+.touch-btn:active,
 .touch-btn.active {
   background: rgba(76,175,80,0.9);
-  transform: scale(0.92);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  transform: scale(0.9);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.7);
 }
 
 .touch-btn-icon {
   font-size: 28px;
+  margin-bottom: 2px;
 }
 
 .touch-btn.small .touch-btn-icon {
   font-size: 22px;
+  margin-bottom: 1px;
 }
 
 .control-btn {
@@ -529,13 +533,33 @@ canvas.show {
   }
   
   .touch-btn {
-    width: 70px;
-    height: 70px;
+    width: 68px;
+    height: 68px;
   }
   
   .touch-btn.small {
     width: 50px;
     height: 50px;
+  }
+  
+  .touch-tilt {
+    left: 95px;
+  }
+}
+
+@media (max-width: 480px) {
+  .touch-btn {
+    width: 65px;
+    height: 65px;
+  }
+  
+  .touch-btn.small {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .touch-tilt {
+    left: 90px;
   }
 }
 </style>
@@ -593,13 +617,13 @@ canvas.show {
 
   <div class="touch-controls" id="touchControls">
     <div class="touch-left">
-      <div class="touch-btn" id="brakeBtn">
-        <div class="touch-btn-icon">⬇️</div>
-        <div>BRAKE</div>
-      </div>
       <div class="touch-btn" id="jumpBtn">
         <div class="touch-btn-icon">⬆️</div>
         <div>JUMP</div>
+      </div>
+      <div class="touch-btn" id="brakeBtn">
+        <div class="touch-btn-icon">⬇️</div>
+        <div>BRAKE</div>
       </div>
     </div>
     
