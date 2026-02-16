@@ -318,7 +318,7 @@ canvas.show {
   bottom: 0;
   left: 0;
   right: 0;
-  height: calc(180px + env(safe-area-inset-bottom));
+  height: calc(200px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   pointer-events: auto;
   display: none;
@@ -331,30 +331,30 @@ canvas.show {
 .touch-left {
   position: absolute;
   left: 15px;
-  bottom: env(safe-area-inset-bottom, 20px);
+  bottom: calc(20px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .touch-right {
   position: absolute;
   right: 15px;
-  bottom: env(safe-area-inset-bottom, 20px);
+  bottom: calc(20px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-end;
 }
 
 .touch-tilt {
   position: absolute;
   left: 15px;
-  top: 50%;
+  top: 40%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .touch-btn {
@@ -376,9 +376,9 @@ canvas.show {
 }
 
 .touch-btn.small {
-  width: 50px;
-  height: 50px;
-  font-size: 10px;
+  width: 55px;
+  height: 55px;
+  font-size: 9px;
 }
 
 .touch-btn.active {
@@ -392,7 +392,7 @@ canvas.show {
 }
 
 .touch-btn.small .touch-btn-icon {
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .control-btn {
@@ -534,8 +534,8 @@ canvas.show {
   }
   
   .touch-btn.small {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
   }
 }
 </style>
@@ -593,13 +593,13 @@ canvas.show {
 
   <div class="touch-controls" id="touchControls">
     <div class="touch-left">
-      <div class="touch-btn" id="jumpBtn">
-        <div class="touch-btn-icon">⬆️</div>
-        <div>JUMP</div>
-      </div>
       <div class="touch-btn" id="brakeBtn">
         <div class="touch-btn-icon">⬇️</div>
         <div>BRAKE</div>
+      </div>
+      <div class="touch-btn" id="jumpBtn">
+        <div class="touch-btn-icon">⬆️</div>
+        <div>JUMP</div>
       </div>
     </div>
     
